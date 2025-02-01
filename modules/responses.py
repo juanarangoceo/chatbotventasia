@@ -1,5 +1,6 @@
 import json
 import os
+import time  # Importamos la librería time
 from modules.producto_helper import cargar_especificaciones_producto  # Importamos la función correctamente
 
 # Definir la ruta correcta al archivo JSON en la raíz
@@ -15,6 +16,7 @@ DATOS_CLIENTE = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
     """Revisa si el mensaje coincide con una respuesta predefinida y maneja la venta."""
+    time.sleep(3)  # ⏳ Agregamos un retraso de 3 segundos antes de responder
     mensaje = mensaje.lower()
     
     # Detectar intención de obtener especificaciones del producto
