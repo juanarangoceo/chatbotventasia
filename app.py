@@ -4,7 +4,6 @@ from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
 from modules.openai_helper import generar_respuesta_ia
-from modules.sales_script import flujo_ventas
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -33,14 +32,7 @@ def whatsapp():
 
     print(f"📩 Mensaje recibido de {sender}: {incoming_msg}")
 
-    # Seguir el flujo de ventas antes de llamar a OpenAI
-    respuesta_flujo = flujo_ventas(sender, incoming_msg)
-    if respuesta_flujo:
-        resp = MessagingResponse()
-        resp.message(respuesta_flujo)
-        return str(resp)
-
-    # Si no hay flujo de ventas, usa OpenAI
+    # Generar respuesta de OpenAI
     response_text = generar_respuesta_ia(incoming_msg)
 
     resp = MessagingResponse()
@@ -50,4 +42,3 @@ def whatsapp():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
-
