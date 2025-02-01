@@ -7,10 +7,13 @@ from modules.config_loader import cargar_config
 load_dotenv()
 
 # Configurar API Key de OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("OPENAI_API_KEY")
 
-if not openai.api_key:
+if not api_key:
     raise ValueError("❌ ERROR: No se encontró la API Key en el archivo .env")
+
+# Instanciar cliente OpenAI con la nueva API
+client = openai.OpenAI(api_key=api_key)
 
 config = cargar_config()
 
@@ -28,7 +31,7 @@ def construir_prompt():
 def generar_respuesta_ia(mensaje):
     """Genera una respuesta con OpenAI basada en el prompt estructurado."""
     try:
-        response = openai.ChatCompletion.create(  # ← ESTA ES LA FORMA CORRECTA
+        response = client.chat.completions.create(
             model=config["modelo"],
             messages=[
                 {"role": "system", "content": construir_prompt()},
@@ -37,8 +40,7 @@ def generar_respuesta_ia(mensaje):
             temperature=config["temperature"],
             max_tokens=config["max_tokens"]
         )
-
-        return response['choices'][0]['message']['content'].strip()
+        return response.choices[0].message.content.strip()
 
     except openai.OpenAIError as e:
         return f"⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde. Detalle: {str(e)}"
