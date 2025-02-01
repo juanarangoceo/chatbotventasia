@@ -1,40 +1,40 @@
 import json
 import os
 import time
-import threading  # Para manejar el temporizador
+import threading
 from modules.producto_helper import cargar_especificaciones_producto
+from modules.config_loader import cargar_prompt
 
-# Definir la ruta correcta al archivo JSON en la raíz del proyecto
-PRODUCTO_JSON_PATH = os.path.join(os.getcwd(), "producto.json")
+# Cargar el prompt desde el archivo JSON
+PROMPT = cargar_prompt()
 
-RESPUESTAS_PREDEFINIDAS = {
-    "horario": "📅 Nuestro horario es de 9 AM a 6 PM, lunes a viernes. ¿Quieres que gestionemos tu pedido hoy?",
-    "ubicacion": "📍 Estamos en Bogotá y hacemos envíos a toda Colombia. ¿Te gustaría recibirlo en tu ciudad?",
-    "precio": "💰 La *Cafetera Espresso Pro* cuesta $399,900 COP con envío gratis. ¿Quieres que la enviemos con pago contra entrega?",
-}
-
+# Diccionario para almacenar datos del cliente
 DATOS_CLIENTE = {}
 TEMPORIZADORES = {}
 
 def iniciar_temporizador(cliente_id, enviar_mensaje):
-    """Inicia un temporizador para enviar un mensaje si el cliente no responde en 5 minutos."""
+    """Inicia un temporizador de 5 minutos para enviar un recordatorio si el cliente no responde."""
     if cliente_id in TEMPORIZADORES:
         TEMPORIZADORES[cliente_id].cancel()
 
-    timer = threading.Timer(300, enviar_mensaje, args=[cliente_id])  # 5 minutos (300 segundos)
+    timer = threading.Timer(300, enviar_mensaje, args=[cliente_id])
     TEMPORIZADORES[cliente_id] = timer
     timer.start()
 
 def enviar_mensaje_recordatorio(cliente_id):
     """Envía un mensaje de seguimiento si el cliente no responde en 5 minutos."""
-    return f"🤖 ¡Aún estás ahí? La *Cafetera Espresso Pro* está lista para enviarse. ¿Te gustaría concretar tu pedido?"
+    return "🤖 ¿Aún estás ahí? La *Cafetera Espresso Pro* está lista para enviarse. ¿Te gustaría concretar tu pedido ahora?"
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona la conversación guiada, manejo de objeciones y cierre de ventas."""
+    """Gestiona la conversación y evita repeticiones para concretar la venta."""
     time.sleep(3)  # ⏳ Retraso de 3 segundos antes de responder
     mensaje = mensaje.lower().strip()
 
-    # Detectar intención de conocer el producto
+    # Inicio de conversación con preguntas abiertas
+    if mensaje in ["hola", "buenas", "buen día", "buenas tardes", "buenas noches"]:
+        return "¡Hola! ¿Qué tipo de café prefieres: espresso, capuchino o americano? ☕"
+
+    # Especificaciones del producto
     if "especificaciones" in mensaje or "detalles" in mensaje or "qué incluye" in mensaje:
         producto = cargar_especificaciones_producto()
         if "error" in producto:
@@ -45,25 +45,19 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         respuesta += "\n".join([f"- {c}" for c in producto["caracteristicas"]])
         respuesta += f"\n💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
         respuesta += "¿Te gustaría recibirla con *pago contra entrega*? 😊"
-        
+
         iniciar_temporizador(cliente_id, enviar_mensaje_recordatorio)
         return respuesta
 
     # Manejo de objeciones
-    if "muy caro" in mensaje or "precio alto" in mensaje:
-        return "💰 Entiendo tu preocupación. Esta cafetera ofrece calidad profesional a un precio justo. Además, incluye *envío gratis* y garantía. ¿Quieres apartar la tuya?"
-
-    if "por qué elegir esta" in mensaje or "comparación" in mensaje:
-        return "🔍 A diferencia de otras, la *Cafetera Espresso Pro* tiene *pantalla táctil, tubo de vapor y extracción de 20 Bar*. ¿Quieres probar su calidad?"
-
-    if "no estoy seguro" in mensaje or "quizás después" in mensaje:
-        return "😊 No hay problema. ¿Qué información te ayudaría a decidirte? Puedo resolver cualquier duda."
-
-    # Respuestas predefinidas
-    for palabra_clave, respuesta in RESPUESTAS_PREDEFINIDAS.items():
-        if palabra_clave in mensaje:
-            iniciar_temporizador(cliente_id, enviar_mensaje_recordatorio)
-            return respuesta
+    objeciones = {
+        "muy caro": "💰 Entiendo, pero esta cafetera tiene *calidad profesional* con *pantalla táctil y extracción de 20 Bar*. Además, el envío es gratis. ¿Te gustaría probarla?",
+        "comparación": "🔍 A diferencia de otras, la *Cafetera Espresso Pro* tiene *pantalla táctil, tubo de vapor y sistema de extracción precisa*. ¿Quieres más detalles?",
+        "quizás después": "😊 No hay problema. ¿Qué información te ayudaría a decidirte? Puedo responder cualquier duda."
+    }
+    for obj, resp in objeciones.items():
+        if obj in mensaje:
+            return resp
 
     # Proceso de venta: solicitar datos del cliente
     if "quiero comprar" in mensaje or "cómo lo adquiero" in mensaje:
@@ -76,12 +70,12 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             if key not in DATOS_CLIENTE[cliente_id]:
                 if key == "telefono" and not mensaje.isdigit():
                     return "📞 El número debe contener solo dígitos. ¿Podrías ingresarlo nuevamente?"
-                
+
                 DATOS_CLIENTE[cliente_id][key] = mensaje
 
                 if all(d in DATOS_CLIENTE[cliente_id] for d in datos_faltantes):
                     pedido = DATOS_CLIENTE.pop(cliente_id)
-                    return f"✅ ¡Gracias {pedido['nombre']}! Tu pedido de {pedido['unidades']} unidades será enviado a {pedido['direccion']}. Te contactaremos al {pedido['telefono']}."
+                    return f"{PROMPT['mensaje_cierre']}"
 
                 return solicitar_datos_venta(cliente_id)
 

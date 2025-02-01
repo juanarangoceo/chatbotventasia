@@ -2,20 +2,20 @@ import json
 import os
 
 CONFIG_JSON_PATH = os.path.join(os.getcwd(), "config.json")
+PROMPT_JSON_PATH = os.path.join(os.getcwd(), "prompt.json")
 
 def cargar_config():
-    """Carga siempre la configuración más reciente desde config.json."""
+    """Carga la configuración general desde config.json."""
     try:
         with open(CONFIG_JSON_PATH, "r", encoding="utf-8") as file:
-            return json.load(file)  # Se carga directamente, sin caché
-    except FileNotFoundError:
-        print("⚠️ Error: No se encontró 'config.json'.")
-        return {}
-    except json.JSONDecodeError:
-        print("⚠️ Error: El archivo 'config.json' tiene un formato inválido.")
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
-# Función opcional para forzar recarga si es necesario en otro módulo
-def recargar_config():
-    """Función auxiliar para forzar la recarga de la configuración en tiempo real."""
-    return cargar_config()
+def cargar_prompt():
+    """Carga el prompt desde prompt.json."""
+    try:
+        with open(PROMPT_JSON_PATH, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
