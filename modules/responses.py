@@ -1,14 +1,9 @@
-import json
-import os
 import time
 import threading
 from modules.producto_helper import cargar_especificaciones_producto
 from modules.config_loader import cargar_prompt
 
-# Cargar el prompt desde el archivo JSON
 PROMPT = cargar_prompt()
-
-# Diccionario para almacenar datos del cliente
 DATOS_CLIENTE = {}
 TEMPORIZADORES = {}
 
@@ -22,20 +17,18 @@ def iniciar_temporizador(cliente_id, enviar_mensaje):
     timer.start()
 
 def enviar_mensaje_recordatorio(cliente_id):
-    """Envía un mensaje de seguimiento si el cliente no responde en 5 minutos."""
-    return "🤖 ¿Aún estás ahí? La *Cafetera Espresso Pro* está lista para enviarse. ¿Te gustaría concretar tu pedido ahora?"
+    """Envía un mensaje si el cliente no responde en 5 minutos."""
+    return "🤖 ¿Aún estás ahí? La *Máquina para Café Automática* está lista para enviarse. ¿Te gustaría concretar tu pedido ahora?"
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona la conversación y evita repeticiones para concretar la venta."""
-    time.sleep(3)  # ⏳ Retraso de 3 segundos antes de responder
+    """Gestiona la conversación utilizando prompt.json para guiar la venta."""
+    time.sleep(3)
     mensaje = mensaje.lower().strip()
 
-    # Inicio de conversación con preguntas abiertas
     if mensaje in ["hola", "buenas", "buen día", "buenas tardes", "buenas noches"]:
-        return "¡Hola! ¿Qué tipo de café prefieres: espresso, capuchino o americano? ☕"
+        return f"¡Hola! {PROMPT['guion_ventas']['interaccion_1']}"
 
-    # Especificaciones del producto
-    if "especificaciones" in mensaje or "detalles" in mensaje or "qué incluye" in mensaje:
+    if "especificaciones" in mensaje or "detalles" in mensaje:
         producto = cargar_especificaciones_producto()
         if "error" in producto:
             return producto["error"]
@@ -44,28 +37,20 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         respuesta += "📌 *Características:* \n"
         respuesta += "\n".join([f"- {c}" for c in producto["caracteristicas"]])
         respuesta += f"\n💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
-        respuesta += "¿Te gustaría recibirla con *pago contra entrega*? 😊"
+        respuesta += f"{PROMPT['guion_ventas']['interaccion_2']}"
 
         iniciar_temporizador(cliente_id, enviar_mensaje_recordatorio)
         return respuesta
 
-    # Manejo de objeciones
-    objeciones = {
-        "muy caro": "💰 Entiendo, pero esta cafetera tiene *calidad profesional* con *pantalla táctil y extracción de 20 Bar*. Además, el envío es gratis. ¿Te gustaría probarla?",
-        "comparación": "🔍 A diferencia de otras, la *Cafetera Espresso Pro* tiene *pantalla táctil, tubo de vapor y sistema de extracción precisa*. ¿Quieres más detalles?",
-        "quizás después": "😊 No hay problema. ¿Qué información te ayudaría a decidirte? Puedo responder cualquier duda."
-    }
-    for obj, resp in objeciones.items():
+    for obj, resp in PROMPT["manejo_objeciones"].items():
         if obj in mensaje:
             return resp
 
-    # Proceso de venta: solicitar datos del cliente
     if "quiero comprar" in mensaje or "cómo lo adquiero" in mensaje:
-        return solicitar_datos_venta(cliente_id)
+        return PROMPT["guion_ventas"]["interaccion_3"]
 
-    # Capturar información del cliente y validar datos
     if cliente_id in DATOS_CLIENTE:
-        datos_faltantes = ["nombre", "direccion", "telefono", "unidades"]
+        datos_faltantes = ["nombre", "direccion", "telefono"]
         for key in datos_faltantes:
             if key not in DATOS_CLIENTE[cliente_id]:
                 if key == "telefono" and not mensaje.isdigit():
@@ -77,7 +62,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
                     pedido = DATOS_CLIENTE.pop(cliente_id)
                     return f"{PROMPT['mensaje_cierre']}"
 
-                return solicitar_datos_venta(cliente_id)
+                return PROMPT["guion_ventas"]["interaccion_4"]
 
     iniciar_temporizador(cliente_id, enviar_mensaje_recordatorio)
     return "🤖 No estoy seguro de haber entendido. ¿Te gustaría que te ayude con algo más?"
