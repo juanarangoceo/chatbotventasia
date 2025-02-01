@@ -29,7 +29,7 @@ def construir_prompt():
 def generar_respuesta_ia(mensaje):
     """Genera una respuesta con OpenAI basada en el prompt estructurado."""
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.client.chat.completions.create(
             model=prompt_config.get("modelo", "gpt-4"),  # Usa el modelo definido en prompt.json
             messages=[
                 {"role": "system", "content": construir_prompt()},
