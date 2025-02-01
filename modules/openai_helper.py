@@ -1,7 +1,7 @@
 import openai
 import os
 from dotenv import load_dotenv
-from modules.config_loader import cargar_prompt  # Ahora importamos cargar_prompt
+from modules.config_loader import cargar_prompt  
 
 # Cargar variables de entorno
 load_dotenv()
@@ -30,7 +30,7 @@ def generar_respuesta_ia(mensaje):
     """Genera una respuesta con OpenAI basada en el prompt estructurado."""
     try:
         response = openai.ChatCompletion.create(
-            model=prompt_config.get("modelo", "gpt-4"),  # Usa el modelo definido en el prompt.json
+            model=prompt_config.get("modelo", "gpt-4"),  # Usa el modelo definido en prompt.json
             messages=[
                 {"role": "system", "content": construir_prompt()},
                 {"role": "user", "content": mensaje}
@@ -41,6 +41,5 @@ def generar_respuesta_ia(mensaje):
 
         return response['choices'][0]['message']['content'].strip()
 
-    except openai.error.OpenAIError as e:
-        return "⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde."
-
+    except Exception as e:  # Se cambia de openai.error.OpenAIError a Exception
+        return f"⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde. Detalle: {str(e)}"
