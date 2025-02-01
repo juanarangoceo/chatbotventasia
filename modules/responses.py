@@ -1,73 +1,48 @@
 import json
 import os
-import time  
-from modules.producto_helper import cargar_especificaciones_producto  
-from modules.config_loader import cargar_prompt  # Cargar el prompt estructurado
+import time
+from modules.producto_helper import cargar_especificaciones_producto
 
-PRODUCTO_JSON_PATH = os.path.join(os.getcwd(), "producto.json")
+# Almacena los clientes para controlar la primera interacción
+usuarios = {}
 
-# Diccionario para manejar la conversación de cada usuario
-CONVERSACIONES = {}
-
-# Cargar el prompt de ventas desde prompt.json
-PROMPT_VENTAS = cargar_prompt()
-
-# Mensaje de bienvenida cuando es la primera interacción del usuario
-MENSAJE_BIENVENIDA = """¡Hola! ☕ Soy Juan, tu asesor de café profesional. 
-Estoy aquí para ayudarte a descubrir cómo puedes disfrutar en casa de un café digno de cafetería, con nuestra Máquina para Café Automática. 🙌
-✍️ Cuéntanos, *¿Desde qué ciudad nos escribes?* 🏙️"""
+RESPUESTAS_PREDEFINIDAS = {
+    "horario": "📅 Nuestro horario de atención es de 9 AM a 6 PM, de lunes a viernes. ¿En qué podemos ayudarte hoy?",
+    "ubicacion": "📍 Estamos ubicados en Bogotá, Colombia. ¿Desde qué ciudad nos escribes?",
+}
 
 DATOS_CLIENTE = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona la conversación y activa el flujo de ventas tras recibir la ciudad del cliente."""
-    time.sleep(3)  # ⏳ Simulación de respuesta natural
-
-    mensaje = mensaje.lower().strip()
+    """Gestiona la respuesta y el flujo de ventas de manera estructurada."""
     
-    # Verificar si el cliente ya ha interactuado antes
-    if cliente_id not in CONVERSACIONES:
-        CONVERSACIONES[cliente_id] = {"estado": "esperando_ciudad"}
-        return MENSAJE_BIENVENIDA
+    time.sleep(3)  # ⏳ Simula un tiempo de respuesta
+    
+    mensaje = mensaje.lower().strip()
 
-    # Si el chatbot está esperando la ciudad, guardarla y activar el flujo de ventas
-    if CONVERSACIONES[cliente_id]["estado"] == "esperando_ciudad":
-        CONVERSACIONES[cliente_id]["estado"] = "flujo_ventas"
-        return (
-            f"¡Gracias! 📍 Verificaremos si tenemos envío a *{mensaje.capitalize()}*.\n\n"
-            f"{PROMPT_VENTAS['guion_ventas']['interaccion_1']}\n"
-        )
+    # 🔹 Saludo y pregunta inicial si es un nuevo usuario
+    if cliente_id not in usuarios:
+        usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
+        return "¡Hola! ☕ Soy Juan, tu asesor de café profesional. Estoy aquí para ayudarte a disfrutar un café de calidad en casa. 🙌\n✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
+    
+    # 🔹 Si el usuario ya respondió con una ciudad, activar el flujo de ventas
+    if usuarios[cliente_id]["estado"] == "preguntar_ciudad":
+        usuarios[cliente_id]["estado"] = "flujo_ventas"
+        return "¡Gracias! Enviamos a tu ciudad con *pago contra entrega* 🚛.\n¿Te gustaría conocer más sobre nuestra *Máquina para Café Automática*?"
 
-    # Flujo de ventas apegado al prompt
-    return continuar_flujo_ventas(mensaje, cliente_id)
+    # 🔹 Detectar intención de conocer especificaciones del producto
+    if "especificaciones" in mensaje or "detalles" in mensaje or "qué incluye" in mensaje:
+        producto = cargar_especificaciones_producto()
+        if "error" in producto:
+            return producto["error"]
 
-def continuar_flujo_ventas(mensaje, cliente_id):
-    """Sigue el guion de ventas estructurado en el prompt."""
-    estado = CONVERSACIONES[cliente_id].get("estado", "")
+        respuesta = f"☕ *{producto['nombre']}* ☕\n{producto['descripcion']}\n\n"
+        respuesta += "📌 *Características:* \n"
+        respuesta += "\n".join([f"- {c}" for c in producto["caracteristicas"]])
+        respuesta += f"\n💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
+        respuesta += "¿Te gustaría que te ayudemos a realizar tu compra? 😊"
 
-    if estado == "flujo_ventas":
-        if "precio" in mensaje or "cuánto cuesta" in mensaje:
-            CONVERSACIONES[cliente_id]["estado"] = "detalles_producto"
-            return f"{PROMPT_VENTAS['guion_ventas']['interaccion_2']}\n"
+        return respuesta
 
-        elif "uso" in mensaje:
-            CONVERSACIONES[cliente_id]["estado"] = "confirmar_envio"
-            return f"{PROMPT_VENTAS['guion_ventas']['interaccion_3']}\n"
-
-        elif "quiero comprar" in mensaje or "envíamelo" in mensaje:
-            CONVERSACIONES[cliente_id]["estado"] = "solicitar_datos"
-            return (
-                f"{PROMPT_VENTAS['guion_ventas']['interaccion_4']}\n"
-                "Por favor, envíanos estos datos para procesar tu compra:\n"
-                "1️⃣ Nombre y apellido\n"
-                "2️⃣ Teléfono 📞\n"
-                "3️⃣ Dirección de envío 🏡\n"
-                "4️⃣ Ciudad 🏙️\n"
-            )
-
-    elif estado == "solicitar_datos":
-        if all(x in mensaje for x in ["nombre", "teléfono", "dirección"]):
-            CONVERSACIONES[cliente_id]["estado"] = "confirmar_pedido"
-            return f"{PROMPT_VENTAS['guion_ventas']['interaccion_5']}\n"
-
+    # 🔹 Respuesta por defecto para mantener la conversación activa
     return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
