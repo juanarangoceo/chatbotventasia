@@ -1,7 +1,7 @@
 import openai
 import os
 from dotenv import load_dotenv
-from modules.config_loader import cargar_config
+from modules.config_loader import cargar_prompt
 
 # Cargar variables de entorno
 load_dotenv()
@@ -13,34 +13,35 @@ if not api_key:
     raise ValueError("❌ ERROR: No se encontró la API Key en el archivo .env")
 
 # Instanciar cliente OpenAI con la nueva API
-client = openai.OpenAI(api_key=api_key)
+client = openai.Client(api_key=api_key)
 
-config = cargar_config()
+# Cargar configuración desde prompt.json
+config = cargar_prompt()
 
 def construir_prompt():
-    """Genera el prompt uniendo las secciones de config.json."""
+    """Genera el prompt uniendo las secciones de prompt.json."""
     return f"""
-    Nombre del Chatbot: {config['chatbot_name']}
-    Rol: {config['role']}
-    Objetivo: {config['objective']}
-    Tono de conversación: {config['tone']}
-    Estrategia de Ventas: {config['sales_strategy']}
-    Directrices de Respuesta: {config['response_guidelines']}
+    Nombre del Chatbot: {config.get('chatbot_name', 'Asistente')}
+    Rol: {config.get('role', 'Asistente Virtual de Ventas')}
+    Objetivo: {config.get('objective', 'Brindar información y cerrar ventas')}
+    Tono de conversación: {config.get('tone', 'Amigable y profesional')}
+    Estrategia de Ventas: {config.get('sales_strategy', 'Guiar al cliente a la compra con preguntas estratégicas')}
+    Directrices de Respuesta: {config.get('response_guidelines', 'Respuestas claras y directas')}
     """
 
 def generar_respuesta_ia(mensaje):
     """Genera una respuesta con OpenAI basada en el prompt estructurado."""
     try:
         response = client.chat.completions.create(
-            model=config["modelo"],
+            model=config.get("modelo", "gpt-4"),
             messages=[
                 {"role": "system", "content": construir_prompt()},
                 {"role": "user", "content": mensaje}
             ],
-            temperature=config["temperature"],
-            max_tokens=config["max_tokens"]
+            temperature=config.get("temperature", 0.7),
+            max_tokens=config.get("max_tokens", 300)
         )
         return response.choices[0].message.content.strip()
 
-    except openai.OpenAIError as e:
+    except openai.APIError as e:
         return f"⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde. Detalle: {str(e)}"
