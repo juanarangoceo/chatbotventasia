@@ -2,7 +2,7 @@ import json
 import os
 
 PROMPT_JSON_PATH = os.path.join(os.getcwd(), "prompt.json")
-prompt_cache = None  # Cache para evitar recargas innecesarias
+prompt_cache = None  # Caché para evitar recargas innecesarias
 
 def cargar_prompt():
     """Carga el prompt desde prompt.json y lo almacena en caché."""
