@@ -1,22 +1,19 @@
+from collections import defaultdict
 import time
 
-# Diccionario de usuarios para rastrear su estado en la conversación
-usuarios = {}
+# Diccionario para manejar el estado del usuario
+usuarios = defaultdict(lambda: {"estado": "inicio", "ultimo_mensaje": time.time()})
 
 def actualizar_estado(cliente_id, nuevo_estado):
-    """Actualiza el estado del cliente en la conversación."""
-    if cliente_id not in usuarios:
-        usuarios[cliente_id] = {"estado": nuevo_estado, "ultimo_mensaje": time.time()}
-    else:
-        usuarios[cliente_id]["estado"] = nuevo_estado
-        usuarios[cliente_id]["ultimo_mensaje"] = time.time()
+    """Actualiza el estado de la conversación del usuario."""
+    usuarios[cliente_id]["estado"] = nuevo_estado
+    usuarios[cliente_id]["ultimo_mensaje"] = time.time()
 
 def obtener_estado(cliente_id):
-    """Obtiene el estado actual del cliente."""
-    return usuarios.get(cliente_id, {}).get("estado", "inicio")
+    """Devuelve el estado actual del usuario."""
+    return usuarios[cliente_id]["estado"]
 
-def tiempo_desde_ultimo_mensaje(cliente_id):
-    """Devuelve el tiempo en segundos desde el último mensaje del cliente."""
-    if cliente_id in usuarios:
-        return time.time() - usuarios[cliente_id]["ultimo_mensaje"]
-    return float('inf')
+def inactividad_cliente(cliente_id, tiempo_maximo=300):
+    """Verifica si un usuario ha estado inactivo por más de `tiempo_maximo` segundos."""
+    tiempo_actual = time.time()
+    return (tiempo_actual - usuarios[cliente_id]["ultimo_mensaje"]) > tiempo_maximo

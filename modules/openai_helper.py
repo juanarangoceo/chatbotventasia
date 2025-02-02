@@ -5,43 +5,26 @@ from modules.config_loader import cargar_prompt
 
 # Cargar variables de entorno
 load_dotenv()
-
-# Configurar API Key de OpenAI
 api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
     raise ValueError("❌ ERROR: No se encontró la API Key en el archivo .env")
 
-# Instanciar cliente OpenAI
 client = openai.OpenAI(api_key=api_key)
-
-# Cargar configuración desde prompt.json
 config = cargar_prompt()
 
-def construir_prompt():
-    """Genera el prompt uniendo las secciones de prompt.json."""
-    return f"""
-    Nombre del Chatbot: {config.get('chatbot_name', 'Juan')}
-    Rol: {config.get('role', 'Asesor experto en café')}
-    Objetivo: {config.get('objective', 'Vender la Cafetera Espresso Pro')}
-    Tono de conversación: {config.get('tone', 'Amigable, directo y persuasivo')}
-    Estrategia de Ventas: {config.get('sales_strategy', 'Guiar rápidamente al cliente a la compra con preguntas estratégicas')}
-    Directrices de Respuesta: {config.get('response_guidelines', 'Respuestas claras y directas')}
-    """
-
 def generar_respuesta_ia(mensaje):
-    """Genera una respuesta con OpenAI basada en el prompt estructurado."""
+    """Usa OpenAI solo si es necesario"""
     try:
         response = client.chat.completions.create(
             model=config.get("modelo", "gpt-4"),
             messages=[
-                {"role": "system", "content": construir_prompt()},
+                {"role": "system", "content": config.get("prompt")},
                 {"role": "user", "content": mensaje}
             ],
             temperature=config.get("temperature", 0.7),
-            max_tokens=config.get("max_tokens", 300)
+            max_tokens=config.get("max_tokens", 250)
         )
         return response.choices[0].message.content.strip()
-
     except openai.APIError as e:
-        return f"⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde. Detalle: {str(e)}"
+        return f"⚠️ Lo siento, hubo un problema con OpenAI. Detalle: {str(e)}"
