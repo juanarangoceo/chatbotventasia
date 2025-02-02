@@ -21,11 +21,11 @@ config = cargar_prompt()
 def construir_prompt():
     """Genera el prompt uniendo las secciones de prompt.json."""
     return f"""
-    Nombre del Chatbot: {config.get('chatbot_name', 'Asistente')}
-    Rol: {config.get('role', 'Asistente Virtual de Ventas')}
-    Objetivo: {config.get('objective', 'Brindar información y cerrar ventas')}
-    Tono de conversación: {config.get('tone', 'Amigable y profesional')}
-    Estrategia de Ventas: {config.get('sales_strategy', 'Guiar al cliente a la compra con preguntas estratégicas')}
+    Nombre del Chatbot: {config.get('chatbot_name', 'Juan')}
+    Rol: {config.get('role', 'Asesor experto en café')}
+    Objetivo: {config.get('objective', 'Vender la Cafetera Espresso Pro')}
+    Tono de conversación: {config.get('tone', 'Amigable, directo y persuasivo')}
+    Estrategia de Ventas: {config.get('sales_strategy', 'Guiar rápidamente al cliente a la compra con preguntas estratégicas')}
     Directrices de Respuesta: {config.get('response_guidelines', 'Respuestas claras y directas')}
     """
 
