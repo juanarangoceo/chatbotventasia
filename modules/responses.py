@@ -2,8 +2,9 @@ import json
 import os
 import time
 from modules.producto_helper import cargar_especificaciones_producto
+from modules.openai_helper import generar_respuesta_ia
 
-# Almacena los clientes para controlar la primera interacción
+# Almacena los clientes y el estado de su conversación
 usuarios = {}
 
 RESPUESTAS_PREDEFINIDAS = {
@@ -13,22 +14,27 @@ RESPUESTAS_PREDEFINIDAS = {
 
 DATOS_CLIENTE = {}
 
-def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona la respuesta y el flujo de ventas de manera estructurada."""
+def obtener_respuesta(mensaje, cliente_id):
+    """Gestiona la respuesta del chatbot con lógica estructurada para ventas."""
     
-    time.sleep(3)  # ⏳ Simula un tiempo de respuesta
-    
+    time.sleep(3)  # ⏳ Simula un tiempo de respuesta para mayor realismo
     mensaje = mensaje.lower().strip()
 
-    # 🔹 Saludo y pregunta inicial si es un nuevo usuario
+    # 🔹 Primera interacción: Saludo y pregunta de ciudad
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
         return "¡Hola! ☕ Soy Juan, tu asesor de café profesional. Estoy aquí para ayudarte a disfrutar un café de calidad en casa. 🙌\n✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
     
-    # 🔹 Si el usuario ya respondió con una ciudad, activar el flujo de ventas
+    # 🔹 Validar respuesta de ciudad y continuar con la venta
     if usuarios[cliente_id]["estado"] == "preguntar_ciudad":
         usuarios[cliente_id]["estado"] = "flujo_ventas"
-        return "¡Gracias! Enviamos a tu ciudad con *pago contra entrega* 🚛.\n¿Te gustaría conocer más sobre nuestra *Máquina para Café Automática*?"
+        return "¡Gracias! Enviamos a tu ciudad con *pago contra entrega* 🚛. \n" \
+               "¿Te gustaría conocer más sobre nuestra *Máquina para Café Automática* y cómo puede mejorar tu rutina diaria?"
+
+    # 🔹 Intentar respuestas predefinidas antes de usar IA
+    for palabra_clave, respuesta in RESPUESTAS_PREDEFINIDAS.items():
+        if palabra_clave in mensaje:
+            return respuesta
 
     # 🔹 Detectar intención de conocer especificaciones del producto
     if "especificaciones" in mensaje or "detalles" in mensaje or "qué incluye" in mensaje:
@@ -44,5 +50,5 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
 
         return respuesta
 
-    # 🔹 Respuesta por defecto para mantener la conversación activa
-    return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
+    # 🔹 Usar IA para continuar la conversación de manera natural
+    return generar_respuesta_ia(mensaje)
