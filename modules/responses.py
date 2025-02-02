@@ -17,44 +17,43 @@ usuarios = {}
 
 # Respuestas predefinidas clave
 PREGUNTAS_CLAVE = {
-    "leche": "Sí, la *Cafetera Espresso Pro* tiene un tubo de vapor de acero inoxidable para crear espuma de leche perfecta. 🥛☕",
-    "precio": "El precio de la *Cafetera Espresso Pro* es *399,900 COP* 💰 con *envío gratis a toda Colombia* 🚚.",
-    "garantía": "La *Cafetera Espresso Pro* tiene garantía de *6 meses* por defectos de fábrica. 🔧📦",
+    "leche": "Sí, la *Cafetera Espresso Pro* tiene un espumador de leche 🥛 para texturas perfectas. ¿Quieres que te ayude con tu pedido? 📦",
+    "precio": "La *Cafetera Espresso Pro* cuesta *399,900 COP* 💰 con *envío gratis* 🚚. ¿Deseas que la enviemos a tu domicilio? 🏡",
+    "garantía": "Tiene *6 meses de garantía* 🔧 por defectos de fábrica. Es un equipo duradero y confiable. ¿Te gustaría ordenar la tuya hoy? ☕",
 }
 
 def obtener_respuesta(mensaje, cliente_id):
-    """Gestiona la conversación y responde de forma inteligente."""
+    """Gestiona la conversación asegurando que el chatbot siga vendiendo siempre."""
 
     time.sleep(2)  # Simula un tiempo de respuesta
     mensaje = mensaje.lower().strip()
 
-    # 🔹 Si el usuario es nuevo, iniciar la conversación con el saludo correcto
+    # 🔹 Si el usuario es nuevo, iniciar con saludo y pregunta de ciudad
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
         return (
-            "¡Hola! ☕ Soy Juan, tu asesor de café profesional. "
-            "Estoy aquí para ayudarte con la *Cafetera Espresso Pro*. 🙌\n\n"
+            "¡Hola! ☕ Soy Juan, experto en café. Te ayudaré con la *Cafetera Espresso Pro*. 🙌\n\n"
             "✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
         )
 
-    # 🔹 Si está en la fase de preguntar la ciudad, guardar y avanzar
+    # 🔹 Guardar ciudad y avanzar en el flujo
     if usuarios[cliente_id]["estado"] == "preguntar_ciudad":
         usuarios[cliente_id]["ciudad"] = mensaje.title()
         usuarios[cliente_id]["estado"] = "confirmar_interes"
         return (
-            f"¡Gracias! Enviamos a {mensaje.title()} con *pago contra entrega* 🚛.\n\n"
-            "¿Te gustaría conocer más sobre nuestra *Cafetera Espresso Pro*? ☕"
+            f"¡Genial! Enviamos a {mensaje.title()} con *pago contra entrega* 🚛.\n\n"
+            "👉 *¿Te gustaría conocer más sobre la Cafetera Espresso Pro?*"
         )
 
-    # 🔹 Si el usuario confirma interés, explicar beneficios
+    # 🔹 Si el usuario confirma interés, explicar beneficios en una respuesta corta
     if usuarios[cliente_id]["estado"] == "confirmar_interes" and mensaje in ["sí", "si", "claro", "me gustaría saber más"]:
         usuarios[cliente_id]["estado"] = "explicar_beneficios"
         return (
-            "Nuestra *Cafetera Espresso Pro* ☕ tiene:\n"
-            "- Presión de 15 bares para un espresso perfecto\n"
-            "- Espumador de leche integrado 🥛\n"
-            "- Preparación automática con un solo toque 🔘\n\n"
-            "👉 *¿Prefieres café espresso o cappuccino?*"
+            "🔹 La *Cafetera Espresso Pro* tiene:\n"
+            "- *15 bares de presión* para espressos perfectos ☕\n"
+            "- *Espumador de leche* 🥛 para capuchinos cremosos\n"
+            "- *Fácil de usar* con pantalla táctil\n\n"
+            "✅ *¿Te gustaría recibirla con pago contra entrega?*"
         )
 
     # 🔹 Si el usuario pregunta por características del producto
@@ -63,36 +62,38 @@ def obtener_respuesta(mensaje, cliente_id):
         if "error" in producto:
             return "⚠️ Lo siento, hubo un error al cargar la información del producto."
 
-        respuesta = f"📦 *{producto['nombre']}* ☕\n{producto['descripcion']}\n\n"
-        respuesta += "📌 *Características:* \n"
-        respuesta += "\n".join([f"- {c}" for c in producto["caracteristicas"]])
-        respuesta += f"\n💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
-        respuesta += "👉 *¿Quieres que te ayude a procesar tu pedido?* 📦"
+        respuesta = (
+            f"📦 *{producto['nombre']}* ☕\n{producto['descripcion']}\n\n"
+            "📌 *Características principales:* \n"
+            + "\n".join([f"- {c}" for c in producto["caracteristicas"]])
+            + f"\n💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
+            "📦 *¿Quieres que la enviemos hoy mismo?* 🚛"
+        )
 
         return respuesta
 
-    # 🔹 Si la pregunta coincide con una de las preguntas clave, responder con información relevante
+    # 🔹 Si la pregunta coincide con una de las preguntas clave, responder con información relevante y reforzar la venta
     for clave, respuesta in PREGUNTAS_CLAVE.items():
         if clave in mensaje:
             return respuesta
 
-    # 🔹 Si el mensaje no encaja con ninguna respuesta, usar OpenAI con un prompt más enfocado
+    # 🔹 Si el mensaje no encaja con ninguna respuesta, usar OpenAI con un prompt más controlado
     try:
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": (
-                    "Eres un asesor de ventas experto en cafeteras espresso. "
-                    "Solo puedes hablar sobre la *Cafetera Espresso Pro*. "
-                    "Tu objetivo es vender este producto destacando sus beneficios y resolviendo dudas. "
-                    "No mencionas otros productos. Siempre enfocas la conversación en cerrar la venta."
+                    "Eres Juan, un asesor de ventas especializado en la *Cafetera Espresso Pro*. "
+                    "Tu único objetivo es vender este producto. Responde siempre con respuestas cortas, "
+                    "claras y enfocadas en cerrar la venta. No menciones otros productos. "
+                    "Si te hacen una pregunta, respóndela y luego lleva la conversación de vuelta a la compra."
                 )},
                 {"role": "user", "content": mensaje}
             ],
-            temperature=0.5,  # Reducir creatividad para respuestas más controladas
-            max_tokens=200
+            temperature=0.3,  # Reducir creatividad para respuestas más predecibles
+            max_tokens=150
         )
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip() + "\n\n📦 *¿Quieres que te ayude a realizar tu pedido?* 🚛"
 
     except openai.APIError:
         return "⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde."
