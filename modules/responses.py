@@ -20,10 +20,10 @@ def obtener_respuesta(mensaje, cliente_id):
     time.sleep(3)  # ⏳ Simula un tiempo de respuesta para mayor realismo
     mensaje = mensaje.lower().strip()
 
-    # 🔹 Primera interacción: Saludo y pregunta de ciudad
+    # 🔹 Primera interacción: Saludo exacto y pregunta de ciudad
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
-        return "¡Hola! ☕ Soy Juan, tu asesor de café profesional. Estoy aquí para ayudarte a disfrutar un café de calidad en casa. 🙌\n✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
+        return "¡Hola! ☕ Soy Juan, tu asesor de café profesional. Estoy aquí para ayudarte a descubrir cómo puedes disfrutar en casa de un café digno de cafetería, con nuestra Máquina para Café Automática. 🙌\n✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
     
     # 🔹 Validar respuesta de ciudad y continuar con la venta
     if usuarios[cliente_id]["estado"] == "preguntar_ciudad":
