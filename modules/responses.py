@@ -76,13 +76,20 @@ def obtener_respuesta(mensaje, cliente_id):
         if clave in mensaje:
             return respuesta
 
-    # 🔹 Si el mensaje no encaja con ninguna respuesta, usar OpenAI para generar una respuesta natural
+    # 🔹 Si el mensaje no encaja con ninguna respuesta, usar OpenAI con un prompt más enfocado
     try:
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "system", "content": "Responde como un vendedor experto en cafeteras de forma clara y natural."},
-                      {"role": "user", "content": mensaje}],
-            temperature=0.7,
+            messages=[
+                {"role": "system", "content": (
+                    "Eres un asesor de ventas experto en cafeteras espresso. "
+                    "Solo puedes hablar sobre la *Cafetera Espresso Pro*. "
+                    "Tu objetivo es vender este producto destacando sus beneficios y resolviendo dudas. "
+                    "No mencionas otros productos. Siempre enfocas la conversación en cerrar la venta."
+                )},
+                {"role": "user", "content": mensaje}
+            ],
+            temperature=0.5,  # Reducir creatividad para respuestas más controladas
             max_tokens=200
         )
         return response.choices[0].message.content.strip()
