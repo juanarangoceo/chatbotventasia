@@ -1,4 +1,5 @@
 import time
+import json
 from modules.producto_helper import cargar_especificaciones_producto
 
 # Almacena el estado de los clientes
@@ -39,6 +40,20 @@ def obtener_respuesta(mensaje, cliente_id):
             "- Preparación automática con un solo toque 🔘\n\n"
             "👉 *¿Prefieres café espresso o cappuccino?*"
         )
+
+    # 🔹 Si el usuario pregunta por las características del producto
+    if "características" in mensaje or "detalles" in mensaje or "qué incluye" in mensaje:
+        producto = cargar_especificaciones_producto()
+        if "error" in producto:
+            return "⚠️ Lo siento, hubo un error al cargar la información del producto."
+
+        respuesta = f"📦 *{producto['nombre']}* ☕\n{producto['descripcion']}\n\n"
+        respuesta += "📌 *Características:* \n"
+        respuesta += "\n".join([f"- {c}" for c in producto["caracteristicas"]])
+        respuesta += f"\n💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
+        respuesta += "👉 *¿Quieres que te ayude a procesar tu pedido?* 📦"
+
+        return respuesta
 
     # 🔹 Si el usuario responde sobre el tipo de café, pasar al cierre
     if usuarios[cliente_id]["estado"] == "explicar_beneficios":
