@@ -6,4 +6,5 @@ def obtener_estado_usuario(cliente_id):
 
 def actualizar_estado_usuario(cliente_id, nuevo_estado):
     """Actualiza el estado del usuario en la conversación."""
+    print(f"🟢 Actualizando estado de {cliente_id} a {nuevo_estado}")  # DEBUG
     usuarios_estado[cliente_id] = nuevo_estado

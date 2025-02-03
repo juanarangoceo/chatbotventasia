@@ -14,11 +14,12 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
 
     estado_actual = obtener_estado_usuario(cliente_id)
 
-    # Permitir que cualquier mensaje inicie el chatbot
+    # Iniciar el chatbot si el usuario envía un saludo
     if estado_actual == "inicio" or intencion == "saludo":
         actualizar_estado_usuario(cliente_id, "preguntar_ciudad")
         return "¡Hola! ☕ Soy *Juan*, tu asesor experto en café. 📍 *¿Desde qué ciudad nos escribes?*"
 
+    # Avanzar correctamente al siguiente estado
     elif estado_actual == "preguntar_ciudad":
         actualizar_estado_usuario(cliente_id, "mostrar_info")
         return (
@@ -29,6 +30,10 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
     elif estado_actual == "mostrar_info":
         actualizar_estado_usuario(cliente_id, "preguntar_precio")
         return f"💰 *Precio:* {producto['precio']} con *envío GRATIS* 🚛.\n\n¿Para qué tipo de café la necesitas?"
+
+    elif estado_actual == "preguntar_precio":
+        actualizar_estado_usuario(cliente_id, "preguntar_compra")
+        return "📦 ¿Quieres recibir la *Cafetera Espresso Pro* con pago contra entrega?"
 
     # Respuesta de fallback mejorada
     return "🤖 No estoy seguro de haber entendido, pero dime, ¿qué te gustaría saber sobre la cafetera? ☕"
