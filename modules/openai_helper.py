@@ -14,16 +14,16 @@ client = openai.OpenAI(api_key=api_key)
 config = cargar_prompt()
 
 def generar_respuesta_ia(mensaje):
-    """Genera respuestas naturales usando OpenAI"""
+    """Genera respuestas naturales y estratégicas usando OpenAI"""
     try:
         response = client.chat.completions.create(
             model=config.get("modelo", "gpt-4"),
             messages=[
-                {"role": "system", "content": "Eres un vendedor experto en cafeteras."},
+                {"role": "system", "content": "Eres un experto en ventas de cafeteras. Responde de forma corta y efectiva, resaltando beneficios clave."},
                 {"role": "user", "content": mensaje}
             ],
-            temperature=config.get("temperature", 0.7),
-            max_tokens=config.get("max_tokens", 250)
+            temperature=config.get("temperature", 0.5),
+            max_tokens=config.get("max_tokens", 150)
         )
         return response.choices[0].message.content.strip()
     except openai.APIError as e:
