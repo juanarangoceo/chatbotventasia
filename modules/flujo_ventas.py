@@ -1,24 +1,10 @@
-import json
-import os
-
-# Ruta del flujo de ventas
-FLUJO_VENTAS_PATH = os.path.join(os.getcwd(), "flujo_ventas.json")
-
-def cargar_flujo_ventas():
-    """Carga el flujo de ventas desde un archivo JSON."""
-    try:
-        with open(FLUJO_VENTAS_PATH, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return {"error": "⚠️ No se encontró el archivo de flujo de ventas."}
-    except json.JSONDecodeError:
-        return {"error": "⚠️ Error en el formato del flujo de ventas."}
-
-def obtener_paso_flujo(estado):
-    """Obtiene la respuesta correspondiente al estado actual del usuario."""
-    flujo = cargar_flujo_ventas()
-    
-    if "error" in flujo:
-        return flujo["error"]
-    
-    return flujo.get(estado, "🤖 No tengo una respuesta para este paso. ¿Podrías darme más detalles?")
+{
+    "inicio": "¡Hola! ☕ Soy *Juan*, tu asesor de café. ¿Desde qué ciudad nos escribes? 📍",
+    "preguntar_ciudad": "¡Gracias! Enviamos a *{ciudad}* con *pago contra entrega* 🚛. ¿Quieres conocer el precio?",
+    "mostrar_info": "La *Cafetera Espresso Pro* ofrece café de calidad barista en casa. ¿Te gustaría conocer más detalles?",
+    "preguntar_precio": "💰 *Precio:* 399,900 COP con *envío GRATIS* 🚚. ¿Para qué tipo de café la necesitas?",
+    "preguntar_compra": "📦 ¿Quieres recibir la *Cafetera Espresso Pro* con pago contra entrega?",
+    "recopilar_datos": "Para procesar tu pedido, dime:\n\n1️⃣ *Nombre completo* 📛\n2️⃣ *Teléfono* 📞\n3️⃣ *Dirección completa* 🏡\n4️⃣ *Ciudad* 🏙️",
+    "verificar_datos": "✅ *Confirmemos tu pedido:*\n\n👤 Nombre: {nombre}\n📞 Teléfono: {telefono}\n🏡 Dirección: {direccion}\n🏙️ Ciudad: {ciudad}\n\n📝 ¿Los datos son correctos? (Responde 'Sí' para confirmar o 'No' para corregir).",
+    "finalizar": "🎉 ¡Pedido confirmado! Te llegará en los próximos días. ☕🚀 ¡Gracias por tu compra!"
+}

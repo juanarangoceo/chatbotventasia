@@ -2,8 +2,8 @@ import os
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
-from modules.response_manager import manejar_mensaje  # Nuevo módulo para manejar respuestas
-from modules.intention_classifier import clasificar_intencion  # Clasificación de intenciones mejorada
+from modules.response_manager import manejar_mensaje
+from modules.intention_classifier import clasificar_intencion
 
 # Cargar variables de entorno
 load_dotenv()
