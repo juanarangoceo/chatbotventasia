@@ -1,13 +1,12 @@
 {
     "nombre": "Cafetera Espresso Pro",
-    "descripcion": "Disfruta de un café de calidad profesional en casa con nuestra Cafetera Espresso Pro.",
-    "caracteristicas": [
-        "Presión de 15 bares para una extracción perfecta",
-        "Espumador de leche integrado",
-        "Depósito de agua de 1.5 litros",
-        "Compatible con café molido y cápsulas",
-        "Diseño compacto y elegante"
-    ],
+    "descripcion": "Una cafetera de alta presión con espumador de leche integrado.",
     "precio": "399,900 COP",
-    "envio": "Envío gratis a toda Colombia con pago contra entrega"
+    "envio": "Envío gratis a toda Colombia",
+    "caracteristicas": [
+        "15 bares de presión",
+        "Espumador de leche integrado",
+        "Compatible con café molido",
+        "Depósito de agua de 1.6 litros"
+    ]
 }

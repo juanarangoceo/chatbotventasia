@@ -1,8 +1,8 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
-from modules.responses import obtener_respuesta_predefinida  # Se asegura que sea el nombre correcto
+from modules.response_manager import manejar_mensaje
 
 # Cargar variables de entorno
 load_dotenv()
@@ -26,7 +26,7 @@ def whatsapp():
         print(f"📩 Mensaje recibido de {sender}: {incoming_msg}")
 
         # Generar respuesta con el flujo optimizado
-        response_text = obtener_respuesta_predefinida(incoming_msg, sender)
+        response_text = manejar_mensaje(incoming_msg, sender)
 
         print(f"🤖 Respuesta generada: {response_text}")
 
