@@ -1,13 +1,14 @@
 import time
 from modules.producto_helper import cargar_especificaciones_producto
+from modules.openai_helper import generar_respuesta_ia
 
 # Diccionario para guardar la información de cada usuario
 usuarios = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona el flujo de ventas con respuestas estructuradas."""
+    """Gestiona el flujo de ventas con respuestas estructuradas usando IA."""
     
-    time.sleep(2)  # Simula un tiempo de respuesta
+    time.sleep(1)  # Simula un tiempo de respuesta
     mensaje = mensaje.lower().strip()
 
     # 🟢 Si el cliente es nuevo, inicia el flujo con un saludo
@@ -27,58 +28,38 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         usuarios[cliente_id]["estado"] = "mostrar_info"
         return (
             f"¡Gracias! Enviamos a *{usuarios[cliente_id]['ciudad']}* con *pago contra entrega* 🚚.\n\n"
-            "📌 ¿Te gustaría conocer más sobre nuestra *Cafetera Espresso Pro*? Responde *Sí* o *No*."
+            "📌 ¿Te gustaría conocer más sobre nuestra *Cafetera Espresso Pro*?"
         )
 
-    # 🟢 Si el usuario responde "Sí", continuar con el flujo de ventas
-    if estado == "mostrar_info" and mensaje in ["sí", "si"]:
-        usuarios[cliente_id]["estado"] = "preguntar_caracteristicas"
-        return (
-            "🔍 La *Cafetera Espresso Pro* es perfecta para los amantes del café. "
-            "📌 ¿Te gustaría conocer sus características y beneficios? Responde *Sí* o *No*."
-        )
-
-    # 🟢 Si el usuario dice "No", preguntarle qué información necesita
-    if estado == "mostrar_info" and mensaje == "no":
-        usuarios[cliente_id]["estado"] = "esperando_pregunta"
-        return "🤔 Entiendo, ¿hay algo específico que quieras saber sobre la cafetera?"
-
-    # 🟢 Manejar preguntas sobre características del producto
-    if estado == "preguntar_caracteristicas" or any(x in mensaje for x in ["características", "detalles", "qué incluye"]):
+    # 🟢 Si el usuario menciona "características", "precio" o "detalles", responder con OpenAI y vender
+    if any(x in mensaje for x in ["características", "precio", "detalles", "cómo funciona", "incluye"]):
         producto = cargar_especificaciones_producto()
         if "error" in producto:
             return producto["error"]
 
         usuarios[cliente_id]["estado"] = "preguntar_compra"
-        return (
-            f"📌 *{producto['nombre']}* 📌\n{producto['descripcion']}\n\n"
-            "🔹 *Características:* \n"
-            + "\n".join([f"- {c}" for c in producto["caracteristicas"]])
-            + f"\n💰 *Precio:* {producto['precio']}\n🚛 {producto['envio']}\n\n"
-            "📦 ¿Te gustaría que te ayudemos a realizar tu compra? 😊 Responde *Sí* o *No*."
+        return generar_respuesta_ia(
+            f"Responde de manera amigable y breve. Explica en menos de 3 frases las características de {producto['nombre']}."
+            " Luego, pregunta al cliente si le gustaría comprar con envío gratis y pago contra entrega."
         )
 
     # 🟢 Manejo de objeción de precio
     if "cara" in mensaje or "muy costosa" in mensaje:
-        return (
-            "💰 Entiendo tu preocupación sobre el precio. "
-            "Sin embargo, la *Cafetera Espresso Pro* es una inversión a largo plazo. "
-            "Te proporcionará café de alta calidad todos los días y te ahorrará dinero "
-            "en cafeterías. ☕✨\n\n"
-            "📦 ¿Quieres que te ayude a procesar tu pedido?"
+        return generar_respuesta_ia(
+            "El cliente dice que el precio es alto. Responde destacando el valor, calidad y ahorro a largo plazo."
+            " Luego, pregunta si quiere que le ayudes a procesar el pedido con pago contra entrega."
         )
 
-    # 🟢 Confirmar compra
-    if estado == "preguntar_compra" and mensaje in ["sí", "si", "quiero comprar"]:
+    # 🟢 Si el usuario muestra interés en comprar, pedir datos
+    if "comprar" in mensaje or "quiero una" in mensaje:
         usuarios[cliente_id]["estado"] = "recopilar_datos"
         usuarios[cliente_id]["datos_pedido"] = {}
         return (
-            "📦 ¡Genial! Para completar tu compra, por favor indícame:\n"
-            "1️⃣ *Nombre y apellido* \n"
-            "2️⃣ *Teléfono* 📞 \n"
+            "📦 ¡Genial! Para completar tu compra, por favor dime:\n"
+            "1️⃣ *Tu nombre completo* \n"
+            "2️⃣ *Número de teléfono* 📞 \n"
             "3️⃣ *Dirección completa* 🏡 \n"
-            "4️⃣ *Ciudad* 🏙️\n\n"
-            "💬 Puedes enviarme los datos en un solo mensaje o uno por uno."
+            "4️⃣ *Ciudad* 🏙️"
         )
 
     # 🟢 Recopilar datos del cliente
@@ -86,7 +67,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         datos = mensaje.split("\n")
         if len(datos) < 4:
             return (
-                "⚠️ Aún faltan algunos datos. Por favor, envíame:\n"
+                "⚠️ Aún faltan datos. Por favor, envíame:\n"
                 "1️⃣ *Nombre y apellido* \n"
                 "2️⃣ *Teléfono* 📞 \n"
                 "3️⃣ *Dirección completa* 🏡 \n"
@@ -112,10 +93,10 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
     # 🟢 Confirmar pedido final
     if estado == "verificar_datos" and mensaje in ["sí", "si", "correcto"]:
         usuarios[cliente_id]["estado"] = "finalizado"
-        return (
-            "🎉 ¡Pedido confirmado! En las próximas horas recibirás un mensaje "
-            "con la información de envío. ¡Gracias por tu compra! ☕🚀"
-        )
+        return "🎉 ¡Pedido confirmado! Te contactaremos pronto con los detalles de entrega. ☕🚀"
 
-    # 🔴 Respuesta genérica si no entiende
-    return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
+    # 🔴 Si no entiende la pregunta, responder con OpenAI y seguir vendiendo
+    return generar_respuesta_ia(
+        f"El usuario preguntó: {mensaje}. Responde de manera corta y natural, "
+        "asegurándote de guiar la conversación hacia la venta de la *Cafetera Espresso Pro*."
+    )
