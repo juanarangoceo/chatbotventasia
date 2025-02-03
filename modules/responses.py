@@ -15,8 +15,8 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
     if "error" in producto:
         return producto["error"]
 
-    # 🟢 Si el mensaje contiene "cafetera", iniciar flujo desde cero
-    if "cafetera" in mensaje:
+    # 🟢 Si el usuario está iniciando, siempre responder con saludo y preguntar la ciudad
+    if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
         return (
             "¡Hola! ☕ Soy *Juan*, tu asesor de café profesional.\n\n"
@@ -24,13 +24,9 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "📍 *¿Desde qué ciudad nos escribes?*"
         )
 
-    # Validar si el cliente ya está en la conversación
-    if cliente_id not in usuarios:
-        return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
-
     estado = usuarios[cliente_id]["estado"]
 
-    # 🟢 Preguntar la ciudad en la primera interacción
+    # 🟢 Preguntar la ciudad si el estado es "preguntar_ciudad"
     if estado == "preguntar_ciudad":
         usuarios[cliente_id]["ciudad"] = mensaje.capitalize()
         usuarios[cliente_id]["estado"] = "mostrar_info"
@@ -68,7 +64,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         usuarios[cliente_id]["estado"] = "recopilar_datos"
         return (
             "📦 *¡Genial! Para completar tu compra, dime:*\n"
-            "1️⃣ *Nombre y apellido* 😊\n"
+            "1️⃣ *Nombre completo* 😊\n"
             "2️⃣ *Teléfono* 📞\n"
             "3️⃣ *Dirección completa* 🏡\n"
             "4️⃣ *Ciudad* 🏙️"
@@ -123,5 +119,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "📦 Gracias por tu compra y disfruta tu *Cafetera Espresso Pro* ☕🚀."
         )
 
-    # 🔴 Respuesta genérica si no entiende
-    return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
+    # 🟢 Respuesta de fallback mejorada para manejar cualquier otro mensaje inesperado
+    return (
+        "🤖 No estoy seguro de haber entendido. Pero dime, ¿tienes alguna pregunta sobre nuestra *Cafetera Espresso Pro* o su proceso de compra? 😊"
+    )

@@ -42,7 +42,7 @@ def whatsapp():
 
     except Exception as e:
         print(f"❌ ERROR en procesamiento del mensaje: {str(e)}")
-        return str(MessagingResponse().message("⚠️ Ocurrió un error inesperado. Inténtalo de nuevo más tarde."))
+        return str(MessagingResponse().message(f"⚠️ Error inesperado: {str(e)}"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)

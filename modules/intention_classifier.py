@@ -5,8 +5,8 @@ def clasificar_intencion(mensaje):
     mensaje = mensaje.lower().strip()
 
     patrones = {
-        "saludo": [r"hola", r"buenos días", r"buenas tardes", r"hey"],
-        "cafetera": [r"cafetera", r"quiero una cafetera", r"máquina de café", r"expresso pro"],
+        "saludo": [r"hola", r"buenos días", r"buenas tardes", r"hey", r"qué tal", r"cómo estás"],
+        "cafetera": [r"cafetera", r"quiero una cafetera", r"máquina de café", r"espresso pro", r"quiero comprar cafetera"],
         "precio": [r"cu[aá]nto cuesta", r"precio", r"valor"],
         "caracteristicas": [r"qué incluye", r"detalles", r"especificaciones", r"características"],
         "compra": [r"quiero comprar", r"c[óo]mo comprar", r"ordenar", r"adquirir"],
@@ -20,4 +20,4 @@ def clasificar_intencion(mensaje):
             if re.search(patron, mensaje):
                 return intencion
 
-    return "desconocido"
+    return "inicio"  # En lugar de "desconocido", se asume que el usuario inicia la conversación.
