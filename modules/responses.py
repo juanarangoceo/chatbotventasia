@@ -15,7 +15,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
     # Si el cliente es nuevo, inicia el flujo con un saludo
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
-        return "¡Hola! ☕ Soy Juan, tu asesor de café profesional. Estoy aquí para ayudarte con la Cafetera Espresso Pro. \n📍 *¿Desde qué ciudad nos escribes?*"
+        return "¡Hola! ☕ Soy Juan, tu asesor de café profesional. Estoy aquí para ayudarte con la *Cafetera Espresso Pro*. \n📍 *¿Desde qué ciudad nos escribes?*"
 
     estado = usuarios[cliente_id]["estado"]
 
@@ -26,7 +26,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         return f"¡Gracias! Enviamos a {usuarios[cliente_id]['ciudad']} con *pago contra entrega* 🚚.\n¿Te gustaría conocer más sobre nuestra *Cafetera Espresso Pro*?"
 
     # Manejar preguntas sobre el producto
-    if any(x in mensaje for x in ["características", "detalles", "qué incluye"]):
+    if any(x in mensaje for x in ["características", "detalles", "qué incluye", "precio"]):
         producto = cargar_especificaciones_producto()
         if "error" in producto:
             return producto["error"]
@@ -40,10 +40,14 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         usuarios[cliente_id]["estado"] = "preguntar_compra"
         return respuesta
 
+    # Manejo de objeciones (ejemplo: precio)
+    if "caro" in mensaje:
+        return "💰 Entiendo tu preocupación sobre el precio. Sin embargo, la *Cafetera Espresso Pro* es una inversión a largo plazo. Te ahorrará dinero en café de cafetería. ¿Quieres proceder con la compra?"
+
     # Preguntar si desea realizar la compra
     if estado == "preguntar_compra" and mensaje in ["sí", "si", "quiero comprar"]:
         usuarios[cliente_id]["estado"] = "recopilar_datos"
-        return "📦 ¡Genial! Para completar tu compra, por favor indícame: \n1️⃣ *Nombre y apellido* \n2️⃣ *Teléfono* 📞 \n3️⃣ *Dirección* 🏡 \n4️⃣ *Ciudad* 🏙️"
+        return "📦 ¡Genial! Para completar tu compra, por favor indícame:\n1️⃣ *Nombre y apellido*\n2️⃣ *Teléfono* 📞\n3️⃣ *Dirección* 🏡\n4️⃣ *Ciudad* 🏙️"
 
     # Recopilar datos del cliente
     if estado == "recopilar_datos":
