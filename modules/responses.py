@@ -1,36 +1,48 @@
-import time
-from modules.producto_helper import cargar_especificaciones_producto
+import os
+from flask import Flask, request
+from twilio.twiml.messaging_response import MessagingResponse
+from dotenv import load_dotenv
+from modules.response_manager import manejar_mensaje  # Nuevo módulo para manejar respuestas
+from modules.intention_classifier import clasificar_intencion  # Clasificación de intenciones mejorada
 
-usuarios = {}
+# Cargar variables de entorno
+load_dotenv()
 
-def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona el flujo de ventas con respuestas estructuradas basadas en el producto."""
+# Inicializar Flask
+app = Flask(__name__)
 
-    time.sleep(1)  # Simula un tiempo de respuesta
-    mensaje = mensaje.lower().strip()
+@app.route("/", methods=["GET"])
+def home():
+    return "🤖 Chatbot de Ventas con IA está activo."
 
-    # Cargar información del producto
-    producto = cargar_especificaciones_producto()
-    if "error" in producto:
-        return producto["error"]
+@app.route("/whatsapp", methods=["POST"])
+def whatsapp():
+    try:
+        incoming_msg = request.values.get("Body", "").strip()
+        sender = request.values.get("From", "")
 
-    # Si el cliente es nuevo, inicia el flujo con un saludo
-    if cliente_id not in usuarios:
-        usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
-        return (
-            "¡Hola! ☕ Soy *Juan*, tu asesor de café profesional.\n\n"
-            f"Estoy aquí para ayudarte con la *{producto['nombre']}*.\n\n"
-            "📍 *¿Desde qué ciudad nos escribes?*"
-        )
+        if not incoming_msg:
+            return str(MessagingResponse().message("⚠️ No recibí un mensaje válido. Inténtalo nuevamente."))
 
-    estado = usuarios[cliente_id]["estado"]
+        print(f"📩 Mensaje recibido de {sender}: {incoming_msg}")
 
-    if estado == "preguntar_ciudad":
-        usuarios[cliente_id]["ciudad"] = mensaje.capitalize()
-        usuarios[cliente_id]["estado"] = "mostrar_info"
-        return (
-            f"¡Gracias! Enviamos a *{usuarios[cliente_id]['ciudad']}* con *pago contra entrega* 🚚.\n\n"
-            f"📌 ¿Te gustaría conocer más sobre nuestra *{producto['nombre']}*?"
-        )
+        # Clasificar la intención del mensaje
+        intencion = clasificar_intencion(incoming_msg)
+        print(f"🔍 Intención detectada: {intencion}")
 
-    return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
+        # Generar respuesta con el flujo optimizado
+        response_text = manejar_mensaje(incoming_msg, sender, intencion)
+
+        print(f"🤖 Respuesta generada: {response_text}")
+
+        resp = MessagingResponse()
+        resp.message(response_text)
+
+        return str(resp)
+
+    except Exception as e:
+        print(f"❌ ERROR en procesamiento del mensaje: {str(e)}")
+        return str(MessagingResponse().message("⚠️ Ocurrió un error inesperado. Inténtalo de nuevo más tarde."))
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)

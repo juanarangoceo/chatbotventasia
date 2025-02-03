@@ -2,7 +2,8 @@ import os
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
-from modules.response_manager import manejar_mensaje
+from modules.response_manager import manejar_mensaje  # Nuevo módulo para manejar respuestas
+from modules.intention_classifier import clasificar_intencion  # Clasificación de intenciones mejorada
 
 # Cargar variables de entorno
 load_dotenv()
@@ -25,8 +26,12 @@ def whatsapp():
 
         print(f"📩 Mensaje recibido de {sender}: {incoming_msg}")
 
+        # Clasificar la intención del mensaje
+        intencion = clasificar_intencion(incoming_msg)
+        print(f"🔍 Intención detectada: {intencion}")
+
         # Generar respuesta con el flujo optimizado
-        response_text = manejar_mensaje(incoming_msg, sender)
+        response_text = manejar_mensaje(incoming_msg, sender, intencion)
 
         print(f"🤖 Respuesta generada: {response_text}")
 

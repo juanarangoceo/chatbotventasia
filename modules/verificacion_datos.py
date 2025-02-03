@@ -1,18 +1,25 @@
-def validar_datos_cliente(mensaje, cliente_id, usuarios):
-    """Verifica y almacena los datos del cliente."""
-    datos = usuarios[cliente_id].get("datos", {})
+import re
 
-    partes = mensaje.split("\n")
-    if len(partes) >= 1: datos["nombre"] = partes[0]
-    if len(partes) >= 2: datos["telefono"] = partes[1]
-    if len(partes) >= 3: datos["direccion"] = partes[2]
-    if len(partes) >= 4: datos["ciudad"] = partes[3]
-
-    faltantes = []
-    if "nombre" not in datos: faltantes.append("1️⃣ *Nombre* 😊")
-    if "telefono" not in datos: faltantes.append("2️⃣ *Teléfono* 📞")
-    if "direccion" not in datos: faltantes.append("3️⃣ *Dirección* 🏡")
-    if "ciudad" not in datos: faltantes.append("4️⃣ *Ciudad* 🏙")
-
-    usuarios[cliente_id]["datos"] = datos
-    return faltantes
+def verificar_datos(mensaje):
+    """Verifica y extrae los datos del usuario para completar la compra."""
+    
+    datos = {}
+    
+    patrones = {
+        "nombre": r"nombre[:\-]?\s*(.+)",
+        "telefono": r"tel[eé]fono[:\-]?\s*(\d{7,10})",
+        "direccion": r"direcci[oó]n[:\-]?\s*(.+)",
+        "ciudad": r"ciudad[:\-]?\s*(.+)"
+    }
+    
+    for campo, patron in patrones.items():
+        match = re.search(patron, mensaje, re.IGNORECASE)
+        if match:
+            datos[campo] = match.group(1).strip()
+    
+    campos_faltantes = [campo for campo in patrones.keys() if campo not in datos]
+    
+    if campos_faltantes:
+        return {"error": f"⚠️ Faltan datos: {', '.join(campos_faltantes)}. Por favor, envíalos en el formato adecuado."}
+    
+    return datos
