@@ -1,14 +1,18 @@
+import re
+import json
 from modules.intention_classifier import clasificar_intencion
 from modules.producto_helper import cargar_especificaciones_producto
 from modules.state_manager import obtener_estado_usuario, actualizar_estado_usuario
 from modules.openai_helper import generar_respuesta_ia
-import json
 
 # Cargar flujo de ventas desde flujo_ventas.json
 with open("flujo_ventas.json", "r", encoding="utf-8") as file:
     flujo_ventas = json.load(file)
 
 usuarios_info = {}
+
+# Expresión regular para detectar si un mensaje parece una ciudad
+CIUDAD_REGEX = r"^[a-zA-ZÀ-ÿ\s]+$"
 
 def manejar_mensaje(mensaje, cliente_id, intencion=None):
     """Genera la respuesta adecuada en función de la intención del usuario y el estado del flujo."""
@@ -31,6 +35,10 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
     elif estado_actual == "preguntar_ciudad":
         if cliente_id in usuarios_info and "ciudad" in usuarios_info[cliente_id]:
             return f"📍 Ya registramos tu ciudad: {usuarios_info[cliente_id]['ciudad']}. {flujo_ventas['preguntar_ciudad']}"
+
+        # **Validar si el mensaje parece ser una ciudad**
+        if not re.match(CIUDAD_REGEX, mensaje):
+            return "⚠️ Por favor, ingresa una ciudad válida para continuar."
 
         usuarios_info[cliente_id] = {"ciudad": mensaje.capitalize()}
         actualizar_estado_usuario(cliente_id, "mostrar_info")
