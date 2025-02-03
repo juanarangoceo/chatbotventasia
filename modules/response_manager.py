@@ -2,6 +2,11 @@ from modules.intention_classifier import clasificar_intencion
 from modules.producto_helper import cargar_especificaciones_producto
 from modules.state_manager import obtener_estado_usuario, actualizar_estado_usuario
 from modules.openai_helper import generar_respuesta_ia
+import json
+
+# Cargar flujo de ventas desde flujo_ventas.json
+with open("flujo_ventas.json", "r", encoding="utf-8") as file:
+    flujo_ventas = json.load(file)
 
 usuarios_info = {}
 
@@ -20,13 +25,13 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
     # 🟢 Inicio del chatbot
     if estado_actual == "inicio" or intencion == "saludo":
         actualizar_estado_usuario(cliente_id, "preguntar_ciudad")
-        return "¡Hola! ☕ Soy *Juan*, tu asesor experto en café. 📍 *¿Desde qué ciudad nos escribes?*"
+        return flujo_ventas["inicio"]
 
     # 🟢 Recibir la ciudad y avanzar en el flujo de ventas con OpenAI
     elif estado_actual == "preguntar_ciudad":
         if cliente_id in usuarios_info and "ciudad" in usuarios_info[cliente_id]:
-            return f"📍 Ya registramos tu ciudad: {usuarios_info[cliente_id]['ciudad']}. ¿Te gustaría conocer más detalles sobre la cafetera?"
-        
+            return f"📍 Ya registramos tu ciudad: {usuarios_info[cliente_id]['ciudad']}. {flujo_ventas['preguntar_ciudad']}"
+
         usuarios_info[cliente_id] = {"ciudad": mensaje.capitalize()}
         actualizar_estado_usuario(cliente_id, "mostrar_info")
 
@@ -38,13 +43,13 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
         print(f"📡 Respuesta de OpenAI: {respuesta_ia}")  # DEBUG
 
         return (
-            f"¡Gracias! Enviamos a *{mensaje.capitalize()}* con *pago contra entrega* 🚚.\n\n"
+            flujo_ventas["preguntar_ciudad"].format(ciudad=mensaje.capitalize()) + "\n\n" +
             f"📌 {respuesta_ia}"
         )
 
     # 🟢 Mostrar información del producto
     elif estado_actual == "mostrar_info":
         actualizar_estado_usuario(cliente_id, "preguntar_precio")
-        return f"💰 *Precio:* {producto['precio']} con *envío GRATIS* 🚛.\n\n¿Para qué tipo de café la necesitas?"
+        return flujo_ventas["mostrar_info"]
 
     return "🤖 No estoy seguro de haber entendido, pero dime, ¿qué te gustaría saber sobre la cafetera? ☕"
