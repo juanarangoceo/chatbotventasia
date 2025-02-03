@@ -6,7 +6,7 @@ from modules.openai_helper import generar_respuesta_ia
 usuarios = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona el flujo de ventas con respuestas estratégicas optimizadas."""
+    """Gestiona el flujo de ventas con respuestas optimizadas y estratégicas."""
     
     time.sleep(1)  # Simula un tiempo de respuesta
     mensaje = mensaje.lower().strip()
@@ -28,32 +28,12 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         usuarios[cliente_id]["estado"] = "mostrar_info"
         return (
             f"¡Gracias! Enviamos a *{usuarios[cliente_id]['ciudad']}* con *pago contra entrega* 🚚.\n\n"
-            "📌 ¿Quieres descubrir por qué la *Cafetera Espresso Pro* es la mejor opción para ti? 😊"
+            "📌 *¿Quieres recibir más detalles sobre la Cafetera Espresso Pro y asegurar tu compra?* 😊"
         )
 
-    # 🟢 Responder preguntas sobre el producto con respuestas optimizadas
-    if any(x in mensaje for x in ["características", "precio", "detalles", "cómo funciona", "incluye"]):
-        producto = cargar_especificaciones_producto()
-        if "error" in producto:
-            return producto["error"]
-
-        usuarios[cliente_id]["estado"] = "preguntar_compra"
-        return generar_respuesta_ia(
-            f"Explica en *dos frases* las *principales características* de la {producto['nombre']} "
-            f"y cómo mejora la experiencia del café. Luego, pregunta al cliente si quiere recibirla con envío gratis."
-        )
-
-    # 🟢 Manejo de objeción de precio con cierre estratégico
-    if "cara" in mensaje or "muy costosa" in mensaje:
-        return generar_respuesta_ia(
-            "El cliente menciona el precio. Responde con *dos frases* sobre su *calidad*, "
-            "el ahorro a largo plazo y la comodidad de preparar café en casa. Luego, pregunta si quiere recibirla con pago contra entrega."
-        )
-
-    # 🟢 Si el usuario quiere comprar, pedir datos ordenadamente
-    if "comprar" in mensaje or "quiero una" in mensaje:
+    # 🟢 Si el cliente dice "Sí" o muestra interés en comprar → **Cerrar la venta directo**
+    if estado in ["mostrar_info", "preguntar_compra"] and mensaje in ["sí", "si", "quiero comprar", "quiero una"]:
         usuarios[cliente_id]["estado"] = "recopilar_datos"
-        usuarios[cliente_id]["datos_pedido"] = {}
         return (
             "📦 ¡Genial! Para completar tu compra, dime:\n"
             "1️⃣ *Tu nombre completo* \n"
@@ -62,12 +42,36 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "4️⃣ *Ciudad* 🏙️"
         )
 
+    # 🟢 Si pregunta sobre características o detalles
+    if any(x in mensaje for x in ["características", "precio", "detalles", "cómo funciona", "incluye"]):
+        producto = cargar_especificaciones_producto()
+        if "error" in producto:
+            return producto["error"]
+
+        usuarios[cliente_id]["estado"] = "preguntar_compra"
+        return (
+            f"📌 *{producto['nombre']}*\n"
+            f"_{producto['descripcion']}_\n\n"
+            "🔹 *Características principales:*\n"
+            + "\n".join([f"- *{c}*" for c in producto["caracteristicas"]]) +
+            f"\n\n💰 *Precio:* {producto['precio']}\n🚛 {producto['envio']}\n\n"
+            "📦 *¿Quieres recibirla con pago contra entrega?* 😊"
+        )
+
+    # 🟢 Manejo de objeción de precio
+    if "cara" in mensaje or "muy costosa" in mensaje:
+        return (
+            "💰 *Entiendo tu preocupación sobre el precio.* Pero la *Cafetera Espresso Pro* es una inversión "
+            "en calidad de vida. ☕✨ *Tendrás café de barista en casa* sin gastar más en cafeterías.\n\n"
+            "📦 *¿Te gustaría recibirla con pago contra entrega?*"
+        )
+
     # 🟢 Recopilar datos asegurando que no falte información
     if estado == "recopilar_datos":
         datos = mensaje.split("\n")
         if len(datos) < 4:
             return (
-                "⚠️ Aún faltan datos. Por favor, envíame:\n"
+                "⚠️ *Falta información.* Por favor, envíame:\n"
                 "1️⃣ *Nombre y apellido* \n"
                 "2️⃣ *Teléfono* 📞 \n"
                 "3️⃣ *Dirección completa* 🏡 \n"
@@ -87,7 +91,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             f"📞 Teléfono: *{datos[1]}*\n"
             f"🏡 Dirección: *{datos[2]}*\n"
             f"🏙️ Ciudad: *{datos[3]}*\n\n"
-            "📝 ¿Los datos están correctos? (Responde *Sí* para confirmar o *No* para corregir)"
+            "📝 *¿Los datos están correctos?* (Responde *Sí* para confirmar o *No* para corregir)"
         )
 
     # 🟢 Confirmar pedido con cierre de venta
