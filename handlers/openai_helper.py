@@ -6,9 +6,12 @@ from dotenv import load_dotenv
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# Crear cliente de OpenAI con la API Key
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
 def generar_respuesta_ia(mensaje):
-    """Genera respuestas con OpenAI para responder sobre café y vender la cafetera."""
-    
+    """Genera respuestas con OpenAI asegurando compatibilidad con la última versión."""
+
     prompt = f"""
     Eres Juan, un *barista profesional y asesor en café*. Tu misión es ayudar a los clientes con cualquier pregunta sobre café y guiarlos para comprar la *Cafetera Espresso Pro*.
 
@@ -37,11 +40,11 @@ def generar_respuesta_ia(mensaje):
     """
 
     try:
-        respuesta = openai.ChatCompletion.create(
+        respuesta = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "system", "content": prompt}],
-            temperature=0.7
+            messages=[{"role": "system", "content": prompt}]
         )
-        return respuesta["choices"][0]["message"]["content"].strip()
+        return respuesta.choices[0].message.content.strip()
     except openai.OpenAIError as e:
-        return "⚠️ Lo siento, hubo un error al generar la respuesta. ¿Puedes reformular tu pregunta?"
+        return f"⚠️ Error con OpenAI: {str(e)}"
+
