@@ -6,7 +6,7 @@ def clasificar_intencion(mensaje):
 
     patrones = {
         "saludo": [r"hola", r"buenos días", r"buenas tardes", r"hey"],
-        "cafetera": [r"cafetera", r"quiero una cafetera", r"máquina de café"],
+        "cafetera": [r"cafetera", r"quiero una cafetera", r"máquina de café", r"expresso pro"],
         "precio": [r"cu[aá]nto cuesta", r"precio", r"valor"],
         "caracteristicas": [r"qué incluye", r"detalles", r"especificaciones", r"características"],
         "compra": [r"quiero comprar", r"c[óo]mo comprar", r"ordenar", r"adquirir"],
