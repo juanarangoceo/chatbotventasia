@@ -14,14 +14,19 @@ client = openai.OpenAI(api_key=api_key)
 config = cargar_prompt()
 
 def generar_respuesta_ia(mensaje):
-    """Genera respuesta asegurando que sigue el flujo de ventas."""
+    """Usa OpenAI para responder cualquier pregunta manteniendo el foco en la venta."""
     try:
+        prompt = (
+            f"{config.get('prompt')}\n\n"
+            "Tu tarea es responder de manera fluida y natural a cualquier pregunta del cliente, "
+            "pero siempre redirigiendo la conversación hacia la venta de la *Cafetera Espresso Pro*. "
+            "Nunca hables de otros productos. Responde con mensajes cortos y persuasivos. "
+            "El cliente escribió: " + mensaje
+        )
+
         response = client.chat.completions.create(
             model=config.get("modelo", "gpt-4"),
-            messages=[
-                {"role": "system", "content": config.get("prompt")},
-                {"role": "user", "content": mensaje}
-            ],
+            messages=[{"role": "system", "content": prompt}],
             temperature=config.get("temperature", 0.7),
             max_tokens=config.get("max_tokens", 250)
         )
