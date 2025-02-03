@@ -20,4 +20,4 @@ def clasificar_intencion(mensaje):
             if re.search(patron, mensaje):
                 return intencion
 
-    return "inicio"  # En lugar de "desconocido", se asume que el usuario inicia la conversación.
+    return "saludo"  # En lugar de "desconocido", se asume que el usuario inicia la conversación.

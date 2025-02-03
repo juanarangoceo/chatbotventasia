@@ -45,4 +45,4 @@ def whatsapp():
         return str(MessagingResponse().message(f"⚠️ Error inesperado: {str(e)}"))
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(host="0.0.0.0", port=10000, debug=True)  # Se activa modo debug

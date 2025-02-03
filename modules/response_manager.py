@@ -15,7 +15,7 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
     estado_actual = obtener_estado_usuario(cliente_id)
 
     # Permitir que cualquier mensaje inicie el chatbot
-    if estado_actual == "inicio":
+    if estado_actual == "inicio" or intencion == "saludo":
         actualizar_estado_usuario(cliente_id, "preguntar_ciudad")
         return "¡Hola! ☕ Soy *Juan*, tu asesor experto en café. 📍 *¿Desde qué ciudad nos escribes?*"
 
@@ -30,5 +30,5 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
         actualizar_estado_usuario(cliente_id, "preguntar_precio")
         return f"💰 *Precio:* {producto['precio']} con *envío GRATIS* 🚛.\n\n¿Para qué tipo de café la necesitas?"
 
-    # Respuesta de fallback si el bot no reconoce el mensaje
+    # Respuesta de fallback mejorada
     return "🤖 No estoy seguro de haber entendido, pero dime, ¿qué te gustaría saber sobre la cafetera? ☕"
