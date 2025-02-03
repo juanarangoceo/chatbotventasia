@@ -10,9 +10,10 @@ def obtener_estado_usuario(cliente_id):
     if time.time() - estado_info["timestamp"] > 600:
         estado_info = {"estado": "inicio", "timestamp": time.time()}
     
+    print(f"🟢 Estado actual de {cliente_id}: {estado_info['estado']}")  # Debug
     return estado_info["estado"]
 
 def actualizar_estado_usuario(cliente_id, nuevo_estado):
-    """Actualiza el estado del usuario en la conversación y reinicia el temporizador."""
+    """Actualiza el estado del usuario en la conversación y lo imprime para depuración."""
     usuarios_estado[cliente_id] = {"estado": nuevo_estado, "timestamp": time.time()}
     print(f"🔄 Estado actualizado: {cliente_id} -> {nuevo_estado}")  # Debug
