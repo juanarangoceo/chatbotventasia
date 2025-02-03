@@ -4,11 +4,11 @@ import os
 PRODUCTO_JSON_PATH = os.path.join(os.getcwd(), "producto.json")
 
 def cargar_especificaciones_producto():
-    """Carga la información del producto en cada consulta."""
+    """Carga los datos del producto desde producto.json"""
     try:
-        with open(PRODUCTO_JSON_PATH, "r", encoding="utf-8") as archivo:
-            return json.load(archivo)  # Se carga directamente sin almacenar en caché
+        with open(PRODUCTO_JSON_PATH, "r", encoding="utf-8") as file:
+            return json.load(file)
     except FileNotFoundError:
-        return {"error": "⚠️ No se encontró la información del producto en 'producto.json'."}
+        return {"error": "⚠️ No se encontró el archivo de especificaciones del producto."}
     except json.JSONDecodeError:
-        return {"error": "⚠️ Error: 'producto.json' tiene un formato inválido."}
+        return {"error": "⚠️ El archivo de producto tiene un formato incorrecto."}

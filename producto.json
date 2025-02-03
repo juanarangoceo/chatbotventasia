@@ -1,12 +1,12 @@
 {
     "nombre": "Cafetera Espresso Pro",
-    "descripcion": "Disfruta de un espresso perfecto en casa con nuestra Cafetera Espresso Pro. Diseño elegante y fácil de usar.",
+    "descripcion": "Disfruta de un café de calidad profesional en casa con nuestra Cafetera Espresso Pro.",
     "caracteristicas": [
-        "Rango de presión de extracción de 0-20 Bar para una extracción precisa",
-        "Tubo de vapor en acero inoxidable para crear espuma de leche perfecta",
-        "Pantalla táctil inteligente para controlar tu café con un solo toque",
-        "Diseño de filtro de doble embudo para mayor versatilidad",
-        "Embudo de fondo plano para distribución uniforme del café"
+        "Presión de 15 bares para una extracción perfecta",
+        "Espumador de leche integrado",
+        "Depósito de agua de 1.5 litros",
+        "Compatible con café molido y cápsulas",
+        "Diseño compacto y elegante"
     ],
     "precio": "399,900 COP",
     "envio": "Envío gratis a toda Colombia con pago contra entrega"
