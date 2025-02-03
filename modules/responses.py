@@ -1,107 +1,86 @@
-import time
 import json
-import openai
+import time
 from modules.producto_helper import cargar_especificaciones_producto
-from dotenv import load_dotenv
-import os
 
-# Cargar variables de entorno
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+# Cargar datos del producto y configuraciones
+with open("producto.json", "r", encoding="utf-8") as f:
+    producto = json.load(f)
 
-# Instanciar cliente OpenAI
-client = openai.Client(api_key=api_key)
+with open("config.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
 
-# Almacenar el estado de los clientes
-usuarios = {}
+# Cargar y guardar estados de usuarios
+USUARIOS_FILE = "usuarios.json"
 
-# Preguntas clave para guiar la conversación
-PREGUNTAS_CLAVE = {
-    "leche": "Sí, la *Cafetera Espresso Pro* tiene un espumador de leche 🥛 para texturas perfectas. ¿Quieres que te ayude con tu pedido? 📦",
-    "precio": "La *Cafetera Espresso Pro* cuesta *399,900 COP* 💰 con *envío gratis* 🚚. ¿Deseas que la enviemos a tu domicilio? 🏡",
-    "garantía": "Tiene *6 meses de garantía* 🔧 por defectos de fábrica. Es un equipo duradero y confiable. ¿Te gustaría ordenar la tuya hoy? ☕",
-}
+def cargar_usuarios():
+    try:
+        with open(USUARIOS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
 
-# Datos que el chatbot debe recolectar para cerrar la venta
+def guardar_usuarios(usuarios):
+    with open(USUARIOS_FILE, "w", encoding="utf-8") as f:
+        json.dump(usuarios, f, indent=4)
+
+usuarios = cargar_usuarios()
+
+# Datos requeridos para cerrar la venta
 CAMPOS_DATOS = ["nombre", "teléfono", "ciudad", "dirección"]
 
 def obtener_respuesta(mensaje, cliente_id):
-    """Gestiona la conversación asegurando que el chatbot siga vendiendo siempre."""
-    time.sleep(2)  # Simula un tiempo de respuesta
     mensaje = mensaje.lower().strip()
+    time.sleep(1)  # Simulación de respuesta
 
-    # 🔹 Si el usuario es nuevo, iniciar con saludo y pregunta de ciudad
+    # Si el usuario es nuevo, iniciar con la pregunta de ciudad
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad", "datos": {}}
-        return (
-            "¡Hola! ☕ Soy Juan, experto en café. Te ayudaré con la *Cafetera Espresso Pro*. 🙌\n\n"
-            "✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
-        )
+        guardar_usuarios(usuarios)
+        return "¡Hola! ☕ Soy Juan, experto en café. Te ayudaré con la *Cafetera Espresso Pro*. 🙌\n\n✍️ *¿Desde qué ciudad nos escribes?* 🏙️"
 
-    # 🔹 Guardar ciudad y avanzar en el flujo
-    if usuarios[cliente_id]["estado"] == "preguntar_ciudad":
+    estado = usuarios[cliente_id]["estado"]
+
+    # Confirmar ciudad y seguir con el proceso
+    if estado == "preguntar_ciudad":
         usuarios[cliente_id]["datos"]["ciudad"] = mensaje.title()
         usuarios[cliente_id]["estado"] = "confirmar_interes"
-        return (
-            f"¡Genial! Enviamos a {mensaje.title()} con *pago contra entrega* 🚛.\n\n"
-            "👉 *¿Te gustaría conocer más sobre la Cafetera Espresso Pro?*"
-        )
+        guardar_usuarios(usuarios)
+        return f"¡Genial! Enviamos a {mensaje.title()} con *pago contra entrega* 🚛.\n\n👉 *¿Te gustaría conocer más sobre la Cafetera Espresso Pro?*"
 
-    # 🔹 Si el usuario confirma interés, explicar beneficios en una respuesta corta
-    if usuarios[cliente_id]["estado"] == "confirmar_interes" and mensaje in ["sí", "si", "claro", "me gustaría saber más"]:
+    # Confirmar interés y dar detalles
+    if estado == "confirmar_interes" and mensaje in ["sí", "si", "claro"]:
         usuarios[cliente_id]["estado"] = "explicar_beneficios"
+        guardar_usuarios(usuarios)
         return (
-            "🔹 La *Cafetera Espresso Pro* tiene:\n"
+            f"🔹 {producto['nombre']} tiene:\n"
             "- *15 bares de presión* para espressos perfectos ☕\n"
             "- *Espumador de leche* 🥛 para capuchinos cremosos\n"
             "- *Fácil de usar* con pantalla táctil\n\n"
-            "✅ *¿Te gustaría recibirla con pago contra entrega?*"
+            f"💰 *Precio:* {producto['precio']}\n🚚 {producto['envio']}\n\n"
+            "✅ *¿Quieres que te la enviemos con pago contra entrega?*"
         )
 
-    # 🔹 Si el cliente dice que quiere comprar, pedir datos en orden
-    if "quiero comprar" in mensaje or "sí" in mensaje and usuarios[cliente_id]["estado"] in ["explicar_beneficios", "resolver_objeciones"]:
+    # Si el cliente quiere comprar, recolectar datos en orden
+    if estado == "explicar_beneficios" and mensaje in ["sí", "quiero comprar"]:
         usuarios[cliente_id]["estado"] = "solicitar_datos"
         usuarios[cliente_id]["datos_pendientes"] = CAMPOS_DATOS.copy()
-        return "📋 Para procesar tu pedido, necesito algunos datos:\n\n" + pedir_siguiente_dato(cliente_id)
+        guardar_usuarios(usuarios)
+        return pedir_siguiente_dato(cliente_id)
 
-    # 🔹 Recolectar datos del cliente
-    if usuarios[cliente_id]["estado"] == "solicitar_datos":
+    # Recolectar datos del cliente
+    if estado == "solicitar_datos":
         campo_actual = usuarios[cliente_id]["datos_pendientes"].pop(0)
         usuarios[cliente_id]["datos"][campo_actual] = mensaje
+        guardar_usuarios(usuarios)
 
-        # Si faltan más datos, seguir pidiendo
         if usuarios[cliente_id]["datos_pendientes"]:
             return pedir_siguiente_dato(cliente_id)
 
-        # Si ya se recolectaron todos los datos, confirmar la compra
         usuarios[cliente_id]["estado"] = "confirmar_datos"
+        guardar_usuarios(usuarios)
         return confirmar_datos(cliente_id)
 
-    # 🔹 Si la pregunta coincide con una de las preguntas clave, responder con información relevante y reforzar la venta
-    for clave, respuesta in PREGUNTAS_CLAVE.items():
-        if clave in mensaje:
-            return respuesta
-
-    # 🔹 Si el mensaje no encaja con ninguna respuesta, usar OpenAI con un prompt más controlado
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": (
-                    "Eres Juan, un asesor de ventas especializado en la *Cafetera Espresso Pro*. "
-                    "Tu único objetivo es vender este producto. Responde siempre con respuestas cortas, "
-                    "claras y enfocadas en cerrar la venta. No menciones otros productos. "
-                    "Si te hacen una pregunta, respóndela y luego lleva la conversación de vuelta a la compra."
-                )},
-                {"role": "user", "content": mensaje}
-            ],
-            temperature=0.3,  # Reducir creatividad para respuestas más predecibles
-            max_tokens=150
-        )
-        return response.choices[0].message.content.strip() + "\n\n📦 *¿Quieres que te ayude a realizar tu pedido?* 🚛"
-
-    except openai.APIError:
-        return "⚠️ Lo siento, hubo un problema con el servicio de OpenAI. Inténtalo más tarde."
+    return "🤖 No entendí bien, ¿puedes reformular tu pregunta?"
 
 def pedir_siguiente_dato(cliente_id):
     """Solicita el siguiente dato necesario para procesar la compra."""
@@ -117,7 +96,7 @@ def confirmar_datos(cliente_id):
     """Confirma los datos proporcionados por el cliente y cierra la venta."""
     datos = usuarios[cliente_id]["datos"]
     return (
-        "✅ *Confirmemos tu pedido:* \n"
+        f"✅ *Confirmemos tu pedido:* \n"
         f"👤 *Nombre:* {datos['nombre']}\n"
         f"📞 *Teléfono:* {datos['teléfono']}\n"
         f"🏙️ *Ciudad:* {datos['ciudad']}\n"
