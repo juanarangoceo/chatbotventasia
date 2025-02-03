@@ -22,7 +22,7 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
         actualizar_estado_usuario(cliente_id, "preguntar_ciudad")
         return "¡Hola! ☕ Soy *Juan*, tu asesor experto en café. 📍 *¿Desde qué ciudad nos escribes?*"
 
-    # 🟢 Verificar si ya tenemos la ciudad antes de preguntar de nuevo
+    # 🟢 Recibir la ciudad y avanzar en el flujo de ventas con OpenAI
     elif estado_actual == "preguntar_ciudad":
         if cliente_id in usuarios_info and "ciudad" in usuarios_info[cliente_id]:
             return f"📍 Ya registramos tu ciudad: {usuarios_info[cliente_id]['ciudad']}. ¿Te gustaría conocer más detalles sobre la cafetera?"
@@ -30,10 +30,13 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
         usuarios_info[cliente_id] = {"ciudad": mensaje.capitalize()}
         actualizar_estado_usuario(cliente_id, "mostrar_info")
 
-        print(f"🌍 Ciudad recibida: {mensaje.capitalize()}")  # DEBUG
+        print(f"✅ Ciudad recibida: {mensaje.capitalize()}")  # DEBUG
+        print(f"🔄 Estado actualizado a: mostrar_info")  # DEBUG
 
         # **Llamar a OpenAI después de recibir la ciudad**
         respuesta_ia = generar_respuesta_ia(f"El cliente es de {mensaje.capitalize()}, ¿qué podemos ofrecerle?", "")
+        print(f"📡 Respuesta de OpenAI: {respuesta_ia}")  # DEBUG
+
         return (
             f"¡Gracias! Enviamos a *{mensaje.capitalize()}* con *pago contra entrega* 🚚.\n\n"
             f"📌 {respuesta_ia}"
