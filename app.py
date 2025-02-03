@@ -2,7 +2,8 @@ import os
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
-from modules.responses import obtener_respuesta  # Asegúrate de que el nombre coincida con responses.py
+from modules.responses import obtener_respuesta_predefinida
+  # Asegúrate de que el nombre coincida con responses.py
 
 # Cargar variables de entorno desde .env
 load_dotenv()
