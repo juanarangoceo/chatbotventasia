@@ -3,22 +3,23 @@ import time
 from handlers.intention_classifier import clasificar_intencion
 from handlers.openai_helper import generar_respuesta_ia
 from handlers.user_state import obtener_estado_usuario, guardar_estado_usuario
+from handlers.producto_helper import obtener_detalle_producto
 
 # Cargar flujo de ventas
 with open("flujo_ventas.json", "r", encoding="utf-8") as file:
     flujo_ventas = json.load(file)
 
 def manejar_mensaje(mensaje, cliente_id):
-    """Maneja el flujo de ventas y la conversación con el usuario de forma fluida."""
+    """Maneja el flujo de ventas asegurando respuestas cortas y dirigidas a la compra."""
     
     estado_actual = obtener_estado_usuario(cliente_id) or {"estado": "inicio"}
     intencion = clasificar_intencion(mensaje)
 
-    print(f"🟢 Estado actual del usuario: {estado_actual['estado']} | 🎯 Intención detectada: {intencion}")
+    print(f"🟢 Estado actual: {estado_actual['estado']} | 🎯 Intención detectada: {intencion}")
 
-    # 🟢 Manejo de interrupciones (el usuario pregunta algo fuera de orden)
+    # 🟢 Manejo de interrupciones (preguntas fuera de orden)
     if intencion in ["precio", "caracteristicas", "envio", "credito", "colores", "molino"]:
-        return generar_respuesta_ia(mensaje)
+        return responder_informacion(intencion)
 
     # 🟢 Inicio del chatbot
     if estado_actual["estado"] == "inicio":
@@ -76,23 +77,15 @@ def manejar_mensaje(mensaje, cliente_id):
 
     return "🤖 No entendí bien. ¿En qué te puedo ayudar con la cafetera? ☕"
 
-def extraer_datos(mensaje):
-    """Extrae los datos del usuario desde un mensaje desordenado."""
-    import re
-    datos = {}
+def responder_informacion(intencion):
+    """Genera respuestas optimizadas para cada tipo de pregunta manteniendo el flujo de ventas."""
+    respuestas = {
+        "precio": "💰 *Precio:* $420,000 COP con *envío GRATIS* 🚚. ¿Quieres que te la enviemos con *pago contra entrega*? 📦",
+        "caracteristicas": "🔹 *Cafetera Espresso Pro* ☕\n- *15 bares de presión* 🔥\n- *Espumador de leche integrado* 🥛\n- *Compatible con café molido* 🌱\n- *Depósito de agua de 1.6L* 💧\n\n📦 ¿Quieres recibirla con *pago contra entrega*?",
+        "envio": "🚛 *Hacemos envíos a toda Colombia.* \n📍 *Ciudades principales:* 1-4 días hábiles. \n🏡 *Poblaciones alejadas:* 5-8 días hábiles.\n\n📦 ¿Quieres recibirla con *pago contra entrega*?",
+        "credito": "💳 Puedes pagarla a crédito con *Addi*. Solo ingresa aquí y selecciona la opción de pago: [🔗 Enlace de pago]",
+        "colores": "🎨 Actualmente solo está disponible en *Negro con Plateado* 🖤⚙️. ¿Te gustaría recibir la tuya?",
+        "molino": "⚙️ La *Cafetera Espresso Pro* *no tiene molino incorporado*. Funciona con café molido. ¿Te gustaría recibir la tuya con *pago contra entrega*? 🚛📦"
+    }
+    return respuestas.get(intencion, "🤖 Lo siento, no entendí bien. ¿Puedes reformular tu pregunta? ☕")
 
-    nombre_match = re.search(r"nombre[:\-]?\s*([a-zA-Z\s]+)", mensaje, re.IGNORECASE)
-    telefono_match = re.search(r"tel[eé]fono[:\-]?\s*(\d{7,10})", mensaje, re.IGNORECASE)
-    direccion_match = re.search(r"direcci[oó]n[:\-]?\s*([\w\s,.-]+)", mensaje, re.IGNORECASE)
-    ciudad_match = re.search(r"ciudad[:\-]?\s*([a-zA-Z\s]+)", mensaje, re.IGNORECASE)
-
-    if nombre_match:
-        datos["nombre"] = nombre_match.group(1).strip()
-    if telefono_match:
-        datos["telefono"] = telefono_match.group(1).strip()
-    if direccion_match:
-        datos["direccion"] = direccion_match.group(1).strip()
-    if ciudad_match:
-        datos["ciudad"] = ciudad_match.group(1).strip()
-
-    return datos if len(datos) >= 3 else None
