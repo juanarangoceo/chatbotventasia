@@ -1,72 +1,45 @@
 import time
 from modules.producto_helper import cargar_especificaciones_producto
+from modules.openai_helper import generar_respuesta_ia
 
-# Diccionario para guardar la información de cada usuario
 usuarios = {}
 
-def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona el flujo de ventas con respuestas estructuradas basadas en el producto."""
+def formatear_respuesta(texto):
+    """Aplica formato a la respuesta: negritas, emojis y preguntas finales."""
+    palabras_clave = ["precio", "descuento", "envío", "calidad", "garantía", "oferta"]
+    for palabra in palabras_clave:
+        texto = texto.replace(palabra, f"*{palabra}*")
+    
+    if not texto.endswith("?"):
+        texto += " 😊"
 
-    time.sleep(1)  # Simula un tiempo de respuesta
+    return texto
+
+def obtener_respuesta_predefinida(mensaje, cliente_id):
+    """Gestiona el flujo de ventas y usa OpenAI si es necesario."""
+    time.sleep(1)
     mensaje = mensaje.lower().strip()
 
-    # 🟢 Cargar información del producto
     producto = cargar_especificaciones_producto()
     if "error" in producto:
         return producto["error"]
 
-    # 🟢 Si el cliente es nuevo, inicia el flujo con un saludo
     if cliente_id not in usuarios:
-        usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
-        return (
-            "¡Hola! ☕ Soy *Juan*, tu asesor de café profesional.\n\n"
-            f"Estoy aquí para ayudarte con la *{producto['nombre']}*.\n\n"
-            "📍 *¿Desde qué ciudad nos escribes?*"
-        )
+        usuarios[cliente_id] = {"estado": "preguntar_ciudad", "historial": ""}
+        return "¡Hola! ☕ Soy *Juan*, tu asesor de café. ¿Desde qué ciudad nos escribes?"
 
     estado = usuarios[cliente_id]["estado"]
+    historial = usuarios[cliente_id]["historial"]
 
-    # 🟢 Preguntar la ciudad en la primera interacción
     if estado == "preguntar_ciudad":
         usuarios[cliente_id]["ciudad"] = mensaje.capitalize()
         usuarios[cliente_id]["estado"] = "mostrar_info"
-        return (
-            f"¡Gracias! Enviamos a *{usuarios[cliente_id]['ciudad']}* con *pago contra entrega* 🚚.\n\n"
-            f"📌 ¿Te gustaría conocer más sobre nuestra *{producto['nombre']}*? Responde con *Sí* o *No*."
-        )
+        return f"¡Gracias! Enviamos a *{mensaje.capitalize()}* con *pago contra entrega* 🚚. ¿Quieres conocer más sobre la *{producto['nombre']}*?"
 
-    # 🟢 Manejo de respuestas afirmativas
-    if estado == "mostrar_info" and mensaje in ["sí", "si", "claro", "quiero saber más"]:
-        usuarios[cliente_id]["estado"] = "mostrar_caracteristicas"
-        return (
-            f"✨ *{producto['nombre']}* ✨\n"
-            f"📝 {producto['descripcion']}\n\n"
-            "🔹 *Características principales:* \n"
-            + "\n".join([f"- {c}" for c in producto["caracteristicas"]]) +
-            f"\n💰 *Precio:* {producto['precio']}\n"
-            f"🚛 {producto['envio']}\n\n"
-            "📦 ¿Te gustaría que te ayudemos a realizar tu compra? 😊"
-        )
+    if any(x in mensaje for x in ["precio", "cuánto cuesta"]):
+        return f"💰 El precio de la *{producto['nombre']}* es *{producto['precio']}*. 🚛 *Envío gratis*. ¿Quieres que te ayude con tu pedido?"
 
-    # 🟢 Pregunta sobre el precio
-    if any(x in mensaje for x in ["precio", "cuánto cuesta", "valor"]):
-        usuarios[cliente_id]["estado"] = "preguntar_compra"
-        return (
-            f"💰 El precio de la *{producto['nombre']}* es de *{producto['precio']}*.\n\n"
-            "🚛 *Envío gratis* a toda Colombia con *pago contra entrega*.\n\n"
-            "📦 ¿Quieres que te ayude a procesar tu pedido?"
-        )
+    respuesta_ia = generar_respuesta_ia(mensaje, historial)
+    usuarios[cliente_id]["historial"] += f"\nCliente: {mensaje}\nJuan: {respuesta_ia}\n"
 
-    # 🟢 Confirmar compra
-    if estado == "preguntar_compra" and mensaje in ["sí", "si", "quiero comprar"]:
-        usuarios[cliente_id]["estado"] = "recopilar_datos"
-        return (
-            "📦 *¡Genial! Para completar tu compra, dime:*\n"
-            "1️⃣ *Nombre y apellido* 😊\n"
-            "2️⃣ *Teléfono* 📞\n"
-            "3️⃣ *Dirección completa* 🏡\n"
-            "4️⃣ *Ciudad* 🏙️"
-        )
-
-    # 🔴 Respuesta genérica si no entiende
-    return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
+    return formatear_respuesta(respuesta_ia)
