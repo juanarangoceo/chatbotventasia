@@ -1,16 +1,16 @@
 import time
 from modules.producto_helper import cargar_especificaciones_producto
 
-# Diccionario para guardar la información de cada usuario
+# Diccionario para manejar la información de cada usuario
 usuarios = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona el flujo de ventas con respuestas estructuradas."""
+    """Gestiona el flujo de ventas asegurando que se mantenga en el embudo correctamente."""
     
-    time.sleep(2)  # Simula un tiempo de respuesta
+    time.sleep(1.5)  # Simula un tiempo de respuesta
     mensaje = mensaje.lower().strip()
 
-    # 🟢 Si el cliente es nuevo, inicia el flujo con un saludo
+    # 🟢 Saludo inicial y solicitud de ciudad
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
         return (
@@ -31,7 +31,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         )
 
     # 🟢 Manejar preguntas sobre características del producto
-    if any(x in mensaje for x in ["características", "detalles", "qué incluye"]):
+    if any(x in mensaje for x in ["características", "detalles", "qué incluye", "especificaciones"]):
         producto = cargar_especificaciones_producto()
         if "error" in producto:
             return producto["error"]
@@ -41,19 +41,18 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "🔹 *Características:* \n"
             + "\n".join([f"- {c}" for c in producto["caracteristicas"]])
             + f"\n💰 *Precio:* {producto['precio']}\n🚛 {producto['envio']}\n\n"
-            "📦 ¿Te gustaría que te ayudemos a realizar tu compra? 😊"
+            "📦 ¿Quieres que te ayude a procesar tu pedido? 😊"
         )
 
         usuarios[cliente_id]["estado"] = "preguntar_compra"
         return respuesta
 
-    # 🟢 Manejo de objeción de precio
+    # 🟢 Manejo de objeciones de precio
     if "cara" in mensaje or "muy costosa" in mensaje:
         return (
             "💰 Entiendo tu preocupación sobre el precio. "
             "Sin embargo, la *Cafetera Espresso Pro* es una inversión a largo plazo. "
-            "Te proporcionará café de alta calidad todos los días y te ahorrará dinero "
-            "en cafeterías. ☕✨\n\n"
+            "Te permitirá disfrutar café de calidad sin gastar en cafeterías. ☕✨\n\n"
             "📦 ¿Quieres que te ayude a procesar tu pedido?"
         )
 
@@ -61,11 +60,11 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
     if estado == "preguntar_compra" and mensaje in ["sí", "si", "quiero comprar"]:
         usuarios[cliente_id]["estado"] = "recopilar_datos"
         return (
-            "📦 ¡Genial! Para completar tu compra, por favor indícame:\n"
-            "1️⃣ *Nombre y apellido* \n"
-            "2️⃣ *Teléfono* 📞 \n"
-            "3️⃣ *Dirección completa* 🏡 \n"
-            "4️⃣ *Ciudad* 🏙️"
+            "📦 ¡Genial! Para completar tu compra, por favor dime:\n"
+            "1️⃣ *Tu nombre completo* \n"
+            "2️⃣ *Tu número de teléfono* 📞 \n"
+            "3️⃣ *Tu dirección completa* 🏡 \n"
+            "4️⃣ *Tu ciudad* 🏙️"
         )
 
     # 🟢 Recopilar datos del cliente
@@ -85,5 +84,5 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "con la información de envío. ¡Gracias por tu compra! ☕🚀"
         )
 
-    # 🔴 Respuesta genérica si no entiende
+    # 🔴 Respuesta genérica si el mensaje no encaja en ningún flujo
     return "🤖 No estoy seguro de haber entendido. ¿Podrías darme más detalles o reformular tu pregunta?"
