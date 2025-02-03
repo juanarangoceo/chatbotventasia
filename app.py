@@ -2,8 +2,7 @@ import os
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
-from modules.responses import obtener_respuesta
-
+from modules.responses import obtener_respuesta  # Asegúrate de que el nombre coincida con responses.py
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -24,7 +23,7 @@ def whatsapp():
     print(f"📩 Mensaje recibido de {sender}: {incoming_msg}")
 
     # Generar respuesta con flujo estructurado
-    response_text = obtener_respuesta_predefinida(incoming_msg, sender)
+    response_text = obtener_respuesta(incoming_msg, sender)  # Aquí está la corrección
 
     resp = MessagingResponse()
     resp.message(response_text)
