@@ -18,6 +18,14 @@ producto = cargar_especificaciones_producto()
 def generar_respuesta_ia(mensaje, historial):
     """Genera una respuesta utilizando OpenAI con el contexto del producto y el historial de la conversación."""
     try:
+        # Verificar si la configuración se cargó correctamente
+        if not config:
+            return "⚠️ Error: No se pudo cargar la configuración del chatbot."
+
+        if "nombre" not in producto:
+            return "⚠️ Error: No se pudo cargar la información del producto."
+
+        # Construcción del prompt para OpenAI
         prompt_base = f"""
         Actúa como *Juan*, un asesor experto en café y ventas de cafeteras. 
         Tu objetivo es guiar al cliente en la compra de la *{producto['nombre']}*.
@@ -50,5 +58,7 @@ def generar_respuesta_ia(mensaje, historial):
         
         return response.choices[0].message.content.strip()
 
-    except openai.APIError as e:
-        return f"⚠️ Lo siento, hubo un problema con OpenAI. Detalle: {str(e)}"
+    except openai.OpenAIError as e:
+        return f"⚠️ Error en OpenAI: {str(e)}"
+    except Exception as e:
+        return f"⚠️ Error inesperado: {str(e)}"
