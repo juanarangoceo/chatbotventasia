@@ -1,16 +1,16 @@
 import time
 from modules.producto_helper import cargar_especificaciones_producto
 
-# Diccionario para manejar la información del usuario
+# Diccionario para guardar el estado de cada usuario
 usuarios = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
-    """Gestiona el flujo de ventas asegurando una conversación estructurada."""
+    """Maneja el flujo de conversación y ventas."""
     
-    time.sleep(2)  # Simula un tiempo de respuesta
+    time.sleep(2)  # Simula tiempo de respuesta
     mensaje = mensaje.lower().strip()
 
-    # 🟢 Si el cliente es nuevo, inicia el flujo con un saludo
+    # 🟢 Inicio del flujo de ventas
     if cliente_id not in usuarios:
         usuarios[cliente_id] = {"estado": "preguntar_ciudad"}
         return (
@@ -21,29 +21,44 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
 
     estado = usuarios[cliente_id]["estado"]
 
-    # 🟢 Preguntar la ciudad en la primera interacción
+    # 🟢 Captura de la ciudad y sigue el flujo
     if estado == "preguntar_ciudad":
         usuarios[cliente_id]["ciudad"] = mensaje.capitalize()
         usuarios[cliente_id]["estado"] = "mostrar_info"
         return (
             f"¡Gracias! Enviamos a *{usuarios[cliente_id]['ciudad']}* con *pago contra entrega* 🚚.\n\n"
-            "📌 ¿Te gustaría conocer más sobre nuestra *Cafetera Espresso Pro*? Responde 'Sí' para más detalles."
+            "📌 ¿Te gustaría conocer más sobre nuestra *Cafetera Espresso Pro*?"
         )
 
-    # 🟢 Mostrar información del producto si responde "sí"
-    if estado == "mostrar_info" and mensaje in ["sí", "si", "quiero saber más"]:
-        usuarios[cliente_id]["estado"] = "esperando_preguntas"
+    # 🟢 Manejo de preguntas sobre características
+    if any(x in mensaje for x in ["características", "detalles", "qué incluye"]):
         producto = cargar_especificaciones_producto()
-        return (
+        if "error" in producto:
+            return producto["error"]
+
+        respuesta = (
             f"📌 *{producto['nombre']}* 📌\n{producto['descripcion']}\n\n"
             "🔹 *Características:* \n"
             + "\n".join([f"- {c}" for c in producto["caracteristicas"]])
             + f"\n💰 *Precio:* {producto['precio']}\n🚛 {producto['envio']}\n\n"
-            "📦 ¿Quieres realizar tu pedido ahora?"
+            "📦 ¿Te gustaría que te ayudemos a realizar tu compra? 😊"
+        )
+
+        usuarios[cliente_id]["estado"] = "preguntar_compra"
+        return respuesta
+
+    # 🟢 Manejo de objeciones de precio
+    if "cara" in mensaje or "muy costosa" in mensaje:
+        return (
+            "💰 Entiendo tu preocupación sobre el precio. "
+            "Sin embargo, la *Cafetera Espresso Pro* es una inversión a largo plazo. "
+            "Te proporcionará café de alta calidad todos los días y te ahorrará dinero "
+            "en cafeterías. ☕✨\n\n"
+            "📦 ¿Quieres que te ayude a procesar tu pedido?"
         )
 
     # 🟢 Confirmar compra
-    if estado == "esperando_preguntas" and mensaje in ["sí", "si", "quiero comprar"]:
+    if estado == "preguntar_compra" and mensaje in ["sí", "si", "quiero comprar"]:
         usuarios[cliente_id]["estado"] = "recopilar_datos"
         return (
             "📦 ¡Genial! Para completar tu compra, por favor indícame:\n"
@@ -53,7 +68,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "4️⃣ *Ciudad* 🏙️"
         )
 
-    # 🟢 Recopilar datos del cliente
+    # 🟢 Validación de datos del cliente
     if estado == "recopilar_datos":
         usuarios[cliente_id]["datos"] = mensaje
         usuarios[cliente_id]["estado"] = "verificar_datos"
