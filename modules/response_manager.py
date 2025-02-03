@@ -20,20 +20,22 @@ flujo_ventas = {
     "finalizar": "🎉 ¡Pedido confirmado! Te llegará en los próximos días. ☕🚀 ¡Gracias por tu compra!"
 }
 
-def manejar_mensaje(mensaje, cliente_id):
+def manejar_mensaje(mensaje, cliente_id, intencion=None):
     """Maneja el flujo de ventas y la conversación con el usuario."""
     
     mensaje = mensaje.strip().lower()
     estado_actual = usuarios_info.get(cliente_id, {}).get("estado", "inicio")
 
-    # 🟢 Inicio del chatbot
+    print(f"🟢 Estado actual del usuario ({cliente_id}): {estado_actual}")  # DEBUG
+
+    # 🟢 Inicio del chatbot: cualquier mensaje activa la conversación
     if estado_actual == "inicio":
         usuarios_info[cliente_id] = {"estado": "preguntar_ciudad"}
         return flujo_ventas["inicio"]
 
-    # 🟢 Recibir la ciudad y avanzar
+    # 🟢 Recibir la ciudad y avanzar en el flujo de ventas con OpenAI
     elif estado_actual == "preguntar_ciudad":
-        if re.match(r"^[a-zA-ZÀ-ÿ\s]+$", mensaje):  # Validar que es una ciudad
+        if re.match(r"^[a-zA-ZÀ-ÿ\s]+$", mensaje):  # Validar que es una ciudad con letras y espacios
             usuarios_info[cliente_id]["ciudad"] = mensaje.capitalize()
             usuarios_info[cliente_id]["estado"] = "mostrar_info"
 
