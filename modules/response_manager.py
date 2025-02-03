@@ -1,63 +1,51 @@
-import re
 import json
+import re
+import time
 from modules.intention_classifier import clasificar_intencion
 from modules.producto_helper import cargar_especificaciones_producto
-from modules.state_manager import obtener_estado_usuario, actualizar_estado_usuario
 from modules.openai_helper import generar_respuesta_ia
 
-# Cargar flujo de ventas desde flujo_ventas.json
-with open("flujo_ventas.json", "r", encoding="utf-8") as file:
-    flujo_ventas = json.load(file)
-
+# Diccionario para almacenar estados y datos de usuarios
 usuarios_info = {}
 
-# Expresión regular para detectar si un mensaje parece una ciudad
-CIUDAD_REGEX = r"^[a-zA-ZÀ-ÿ\s]+$"
+# Flujo de ventas integrado directamente
+flujo_ventas = {
+    "inicio": "¡Hola! ☕ Soy *Juan*, tu asesor de café. ¿Desde qué ciudad nos escribes? 📍",
+    "preguntar_ciudad": "¡Gracias! Enviamos a *{ciudad}* con *pago contra entrega* 🚛. ¿Quieres conocer el precio?",
+    "mostrar_info": "La *Cafetera Espresso Pro* ofrece café de calidad barista en casa. ¿Te gustaría conocer más detalles?",
+    "preguntar_precio": "💰 *Precio:* 399,900 COP con *envío GRATIS* 🚚. ¿Para qué tipo de café la necesitas?",
+    "preguntar_compra": "📦 ¿Quieres recibir la *Cafetera Espresso Pro* con pago contra entrega?",
+    "recopilar_datos": "Para procesar tu pedido, dime:\n\n1️⃣ *Nombre completo* 📛\n2️⃣ *Teléfono* 📞\n3️⃣ *Dirección completa* 🏡\n4️⃣ *Ciudad* 🏙️",
+    "verificar_datos": "✅ *Confirmemos tu pedido:*\n\n👤 Nombre: {nombre}\n📞 Teléfono: {telefono}\n🏡 Dirección: {direccion}\n🏙️ Ciudad: {ciudad}\n\n📝 ¿Los datos son correctos? (Responde 'Sí' para confirmar o 'No' para corregir).",
+    "finalizar": "🎉 ¡Pedido confirmado! Te llegará en los próximos días. ☕🚀 ¡Gracias por tu compra!"
+}
 
-def manejar_mensaje(mensaje, cliente_id, intencion=None):
-    """Genera la respuesta adecuada en función de la intención del usuario y el estado del flujo."""
+def manejar_mensaje(mensaje, cliente_id):
+    """Maneja el flujo de ventas y la conversación con el usuario."""
     
-    if intencion is None:
-        intencion = clasificar_intencion(mensaje)
-    
-    producto = cargar_especificaciones_producto()
-    if "error" in producto:
-        return producto["error"]
-
-    estado_actual = obtener_estado_usuario(cliente_id)
+    mensaje = mensaje.strip().lower()
+    estado_actual = usuarios_info.get(cliente_id, {}).get("estado", "inicio")
 
     # 🟢 Inicio del chatbot
-    if estado_actual == "inicio" or intencion == "saludo":
-        actualizar_estado_usuario(cliente_id, "preguntar_ciudad")
+    if estado_actual == "inicio":
+        usuarios_info[cliente_id] = {"estado": "preguntar_ciudad"}
         return flujo_ventas["inicio"]
 
-    # 🟢 Recibir la ciudad y avanzar en el flujo de ventas con OpenAI
+    # 🟢 Recibir la ciudad y avanzar
     elif estado_actual == "preguntar_ciudad":
-        if cliente_id in usuarios_info and "ciudad" in usuarios_info[cliente_id]:
-            return f"📍 Ya registramos tu ciudad: {usuarios_info[cliente_id]['ciudad']}. {flujo_ventas['preguntar_ciudad']}"
+        if re.match(r"^[a-zA-ZÀ-ÿ\s]+$", mensaje):  # Validar que es una ciudad
+            usuarios_info[cliente_id]["ciudad"] = mensaje.capitalize()
+            usuarios_info[cliente_id]["estado"] = "mostrar_info"
 
-        # **Validar si el mensaje parece ser una ciudad**
-        if not re.match(CIUDAD_REGEX, mensaje):
-            return "⚠️ Por favor, ingresa una ciudad válida para continuar."
-
-        usuarios_info[cliente_id] = {"ciudad": mensaje.capitalize()}
-        actualizar_estado_usuario(cliente_id, "mostrar_info")
-
-        print(f"✅ Ciudad recibida: {mensaje.capitalize()}")  # DEBUG
-        print(f"🔄 Estado actualizado a: mostrar_info")  # DEBUG
-
-        # **Llamar a OpenAI después de recibir la ciudad**
-        respuesta_ia = generar_respuesta_ia(f"El cliente es de {mensaje.capitalize()}, ¿qué podemos ofrecerle?", "")
-        print(f"📡 Respuesta de OpenAI: {respuesta_ia}")  # DEBUG
-
-        return (
-            flujo_ventas["preguntar_ciudad"].format(ciudad=mensaje.capitalize()) + "\n\n" +
-            f"📌 {respuesta_ia}"
-        )
+            # Llamar a OpenAI
+            respuesta_ia = generar_respuesta_ia(f"El cliente es de {mensaje.capitalize()}, ¿qué podemos ofrecerle?", "")
+            return flujo_ventas["preguntar_ciudad"].format(ciudad=mensaje.capitalize()) + "\n\n" + f"📌 {respuesta_ia}"
+        else:
+            return "⚠️ No parece ser una ciudad válida. Por favor, dime desde qué ciudad nos escribes. 📍"
 
     # 🟢 Mostrar información del producto
     elif estado_actual == "mostrar_info":
-        actualizar_estado_usuario(cliente_id, "preguntar_precio")
+        usuarios_info[cliente_id]["estado"] = "preguntar_precio"
         return flujo_ventas["mostrar_info"]
 
     return "🤖 No estoy seguro de haber entendido, pero dime, ¿qué te gustaría saber sobre la cafetera? ☕"
