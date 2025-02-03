@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from handlers.response_manager import manejar_mensaje
@@ -21,4 +22,4 @@ def whatsapp():
     return str(resp)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
