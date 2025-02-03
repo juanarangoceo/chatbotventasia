@@ -1,6 +1,7 @@
 from modules.intention_classifier import clasificar_intencion
 from modules.producto_helper import cargar_especificaciones_producto
 from modules.state_manager import obtener_estado_usuario, actualizar_estado_usuario
+from modules.openai_helper import generar_respuesta_ia
 
 usuarios_info = {}
 
@@ -28,9 +29,14 @@ def manejar_mensaje(mensaje, cliente_id, intencion=None):
         
         usuarios_info[cliente_id] = {"ciudad": mensaje.capitalize()}
         actualizar_estado_usuario(cliente_id, "mostrar_info")
+
+        print(f"🌍 Ciudad recibida: {mensaje.capitalize()}")  # DEBUG
+
+        # **Llamar a OpenAI después de recibir la ciudad**
+        respuesta_ia = generar_respuesta_ia(f"El cliente es de {mensaje.capitalize()}, ¿qué podemos ofrecerle?", "")
         return (
             f"¡Gracias! Enviamos a *{mensaje.capitalize()}* con *pago contra entrega* 🚚.\n\n"
-            f"📌 La *{producto['nombre']}* ofrece café de calidad barista en casa. ¿Te gustaría conocer más detalles?"
+            f"📌 {respuesta_ia}"
         )
 
     # 🟢 Mostrar información del producto

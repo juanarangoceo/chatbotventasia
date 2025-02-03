@@ -24,41 +24,26 @@ def generar_respuesta_ia(mensaje, historial):
         if "nombre" not in producto:
             return "⚠️ Error: No se pudo cargar la información del producto."
 
-        # Construcción del prompt para OpenAI
-        prompt_base = f"""
-        Actúa como *Juan*, un asesor experto en café y ventas de cafeteras. 
-        Tu objetivo es guiar al cliente en la compra de la *{producto['nombre']}* y convencerlo de los beneficios.
-        
-        📌 **Características del producto:**
-        - {producto['descripcion']}
-        - Características: {", ".join(producto['caracteristicas'])}
-        - 💰 *Precio:* {producto['precio']}
-        - 🚛 *Envío:* {producto['envio']}
-        
-        📈 **Estrategia de ventas:**
-        - Responde de manera *breve* (máximo 20 palabras).
-        - Resalta palabras clave con *negritas*.
-        - Siempre incluye una pregunta al final para avanzar la venta.
-        - Si el cliente tiene dudas, refuerza los beneficios del producto.
-        - Usa un tono amigable y persuasivo para generar confianza.
-        """
+        print(f"📡 Enviando mensaje a OpenAI: {mensaje}")  # DEBUG
 
         response = client.chat.completions.create(
             model=config.get("modelo", "gpt-4"),
             messages=[
-                {"role": "system", "content": prompt_base},
+                {"role": "system", "content": f"Actúa como Juan, un asesor experto en café y ventas de cafeteras."},
                 {"role": "user", "content": mensaje}
             ],
             temperature=config.get("temperature", 0.7),
-            max_tokens=120  # Reducido para respuestas más cortas
+            max_tokens=100  # Reducido para respuestas más concisas
         )
         
-        return response.choices[0].message.content.strip()
+        respuesta = response.choices[0].message.content.strip()
+        print(f"✅ Respuesta de OpenAI: {respuesta}")  # DEBUG
+        return respuesta
 
     except openai.OpenAIError as e:
         print(f"❌ ERROR en OpenAI: {str(e)}")
-        return "⚠️ Actualmente tenemos problemas con el sistema. ¿Puedo ayudarte con más información sobre nuestra cafetera? ☕"
+        return "⚠️ Lo siento, hay un problema con el sistema. ¿Cómo puedo ayudarte con la cafetera?"
 
     except Exception as e:
         print(f"❌ ERROR inesperado en OpenAI: {str(e)}")
-        return "⚠️ Lo siento, hubo un problema técnico. Pero dime, ¿qué más te gustaría saber sobre nuestra cafetera? ☕"
+        return "⚠️ Lo siento, hubo un problema técnico. ¿Te gustaría saber más sobre la cafetera? ☕"
