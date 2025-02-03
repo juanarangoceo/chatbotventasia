@@ -6,7 +6,7 @@ usuarios = {}
 
 def obtener_respuesta_predefinida(mensaje, cliente_id):
     """Gestiona el flujo de ventas con respuestas estructuradas basadas en el producto."""
-    
+
     time.sleep(1)  # Simula un tiempo de respuesta
     mensaje = mensaje.lower().strip()
 
@@ -36,30 +36,28 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         )
 
     # 🟢 Manejar preguntas sobre características del producto
-    if any(x in mensaje for x in ["características", "detalles", "qué incluye"]):
-        respuesta = (
+    if any(x in mensaje for x in ["características", "detalles", "qué incluye", "funciones"]):
+        usuarios[cliente_id]["estado"] = "preguntar_compra"
+        return (
             f"📌 *{producto['nombre']}* 📌\n"
-            f"📝 {producto['descripcion']}\n\n"
-            "🔹 *Características principales:* \n"
+            f"🔹 {producto['descripcion']}\n\n"
+            "✅ *Características principales:* \n"
             + "\n".join([f"- {c}" for c in producto["caracteristicas"]]) +
             f"\n💰 *Precio:* {producto['precio']}\n"
             f"🚛 {producto['envio']}\n\n"
-            "📦 ¿Te gustaría que te ayude a realizar tu compra? 😊"
+            "📦 ¿Quieres que te ayude a procesar tu pedido?"
         )
-
-        usuarios[cliente_id]["estado"] = "preguntar_compra"
-        return respuesta
 
     # 🟢 Responder sobre el precio específico del producto
     if any(x in mensaje for x in ["precio", "cuánto cuesta", "valor"]):
         usuarios[cliente_id]["estado"] = "preguntar_compra"
         return (
-            f"💰 *El precio de la {producto['nombre']}* es *{producto['precio']}*.\n\n"
+            f"💰 El precio de la *{producto['nombre']}* es de *{producto['precio']}*.\n\n"
             "🚛 *Envío gratis* a toda Colombia con *pago contra entrega*.\n\n"
             "📦 ¿Quieres que te ayude a procesar tu pedido?"
         )
 
-    # 🟢 Confirmar compra y solicitar datos
+    # 🟢 Confirmar compra
     if estado == "preguntar_compra" and mensaje in ["sí", "si", "quiero comprar"]:
         usuarios[cliente_id]["estado"] = "recopilar_datos"
         return (
@@ -70,11 +68,11 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             "4️⃣ *Ciudad* 🏙️"
         )
 
-    # 🟢 Recopilar datos y verificar si están completos
+    # 🟢 Recopilar datos del cliente y verificar si están completos
     if estado == "recopilar_datos":
         datos = mensaje.split("\n")
-        detalles_cliente = {}
         campos_faltantes = []
+        detalles_cliente = {}
 
         for dato in datos:
             if "nombre" in dato.lower():
@@ -86,20 +84,21 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
             elif "ciudad" in dato.lower():
                 detalles_cliente["ciudad"] = dato.split(":")[-1].strip()
 
-        # Verificar si falta algún dato
+        # Verificar si algún campo está vacío
         for campo in ["nombre", "telefono", "direccion", "ciudad"]:
             if campo not in detalles_cliente:
                 campos_faltantes.append(campo)
 
         if campos_faltantes:
             return (
-                "⚠️ *Falta información.* Por favor, envíame:\n"
+                f"⚠️ *Falta información.* Por favor, envíame:\n"
                 + "\n".join([f"🔹 {c.capitalize()}" for c in campos_faltantes])
             )
 
-        # Guardar los datos y pasar a verificación
+        # Guardar los datos
         usuarios[cliente_id]["datos"] = detalles_cliente
         usuarios[cliente_id]["estado"] = "verificar_datos"
+
         return (
             "✅ *Confirmemos tu pedido:*\n"
             f"👤 *Nombre:* {detalles_cliente['nombre']}\n"
@@ -115,7 +114,7 @@ def obtener_respuesta_predefinida(mensaje, cliente_id):
         return (
             "🎉 *¡Pedido confirmado!*\n\n"
             "En las próximas horas recibirás un mensaje con la información de envío.\n\n"
-            "📦 ¡Gracias por tu compra y disfruta tu *Cafetera Espresso Pro* ☕🚀!"
+            "📦 Gracias por tu compra y disfruta tu *Cafetera Espresso Pro* ☕🚀."
         )
 
     # 🔴 Respuesta genérica si no entiende
