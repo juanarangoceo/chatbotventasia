@@ -4,7 +4,6 @@ from twilio.twiml.messaging_response import MessagingResponse
 from dotenv import load_dotenv
 from modules.response_manager import manejar_mensaje
 from modules.intention_classifier import clasificar_intencion
-from modules.state_manager import obtener_estado_usuario
 
 # Cargar variables de entorno
 load_dotenv()
@@ -26,10 +25,6 @@ def whatsapp():
             return str(MessagingResponse().message("⚠️ No recibí un mensaje válido. Inténtalo nuevamente."))
 
         print(f"📩 Mensaje recibido de {sender}: {incoming_msg}")
-
-        # Obtener estado actual del usuario
-        estado_actual = obtener_estado_usuario(sender)
-        print(f"🟢 Estado actual del usuario: {estado_actual}")
 
         # Clasificar la intención del mensaje
         intencion = clasificar_intencion(incoming_msg)
