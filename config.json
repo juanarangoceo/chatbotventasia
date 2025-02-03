@@ -1,7 +1,7 @@
 {
     "modelo": "gpt-4",
-    "temperature": 0.3,
-    "max_tokens": 100,
+    "temperature": 0.5,
+    "max_tokens": 200,
     "objetivo": "Vender exclusivamente la Cafetera Espresso Pro",
     "tono": "Conversacional, corto y directo",
     "flujo_ventas": [
