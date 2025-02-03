@@ -27,7 +27,7 @@ def generar_respuesta_ia(mensaje, historial):
         # Construcción del prompt para OpenAI
         prompt_base = f"""
         Actúa como *Juan*, un asesor experto en café y ventas de cafeteras. 
-        Tu objetivo es guiar al cliente en la compra de la *{producto['nombre']}*.
+        Tu objetivo es guiar al cliente en la compra de la *{producto['nombre']}* y convencerlo de los beneficios.
         
         📌 **Características del producto:**
         - {producto['descripcion']}
@@ -39,6 +39,8 @@ def generar_respuesta_ia(mensaje, historial):
         - Responde de manera *breve* (máximo 20 palabras).
         - Resalta palabras clave con *negritas*.
         - Siempre incluye una pregunta al final para avanzar la venta.
+        - Si el cliente tiene dudas, refuerza los beneficios del producto.
+        - Usa un tono amigable y persuasivo para generar confianza.
         """
 
         response = client.chat.completions.create(
@@ -48,12 +50,15 @@ def generar_respuesta_ia(mensaje, historial):
                 {"role": "user", "content": mensaje}
             ],
             temperature=config.get("temperature", 0.7),
-            max_tokens=150  # Limitar longitud de la respuesta
+            max_tokens=120  # Reducido para respuestas más cortas
         )
         
         return response.choices[0].message.content.strip()
 
     except openai.OpenAIError as e:
-        return f"⚠️ Error en OpenAI: {str(e)}"
+        print(f"❌ ERROR en OpenAI: {str(e)}")
+        return "⚠️ Actualmente tenemos problemas con el sistema. ¿Puedo ayudarte con más información sobre nuestra cafetera? ☕"
+
     except Exception as e:
-        return f"⚠️ Error inesperado: {str(e)}"
+        print(f"❌ ERROR inesperado en OpenAI: {str(e)}")
+        return "⚠️ Lo siento, hubo un problema técnico. Pero dime, ¿qué más te gustaría saber sobre nuestra cafetera? ☕"

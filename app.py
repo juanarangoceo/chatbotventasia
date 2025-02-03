@@ -38,6 +38,9 @@ def whatsapp():
         # Generar respuesta con el flujo optimizado
         response_text = manejar_mensaje(incoming_msg, sender, intencion)
 
+        if not response_text:
+            response_text = "🤖 No estoy seguro de haber entendido. ¿Puedes reformular tu pregunta? ☕"
+
         print(f"🤖 Respuesta generada: {response_text}")
 
         resp = MessagingResponse()
@@ -47,7 +50,7 @@ def whatsapp():
 
     except Exception as e:
         print(f"❌ ERROR en procesamiento del mensaje: {str(e)}")
-        return str(MessagingResponse().message(f"⚠️ Error inesperado: {str(e)}"))
+        return str(MessagingResponse().message("⚠️ Lo sentimos, ocurrió un error. Intenta de nuevo más tarde."))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000, debug=True)
